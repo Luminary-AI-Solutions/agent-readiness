@@ -174,25 +174,37 @@ def score(report):
         "overall": overall,
         "next": None if achieved == 5 else {"level": achieved + 1, "name": levels[achieved]["name"],
                                             "progress": current["rate"], "criteria_needed": gap},
-        "skipped": sum(1 for c in crit.values() if c.get("status") == "skip"),
+        "skipped": sum(1 for c in crit.values() if c.get("status") == "skip" and not c.get("waived")),
+        "waived": sum(1 for c in crit.values() if c.get("waived")),
+        "lanes": lane_counts(crit),
     }
 
 
+def lane_counts(crit):
+    """How the failing criteria split across fix lanes (auto / guided / manual)."""
+    out = {l["id"]: 0 for l in CRITERIA.get("lanes", [])}
+    for c in CRITERIA["criteria"]:
+        if crit.get(c["id"], {}).get("status") in ("fail", "review"):
+            out[c.get("lane", "guided")] = out.get(c.get("lane", "guided"), 0) + 1
+    return out
+
+
 def actions(report, sc):
-    if report.get("action_items"):
-        return report["action_items"]
     meta = {c["id"]: c for c in CRITERIA["criteria"]}
+    if report.get("action_items"):
+        return [dict(a, lane=a.get("lane") or meta.get(a.get("criterion"), {}).get("lane")) for a in report["action_items"]]
     failing = [cid for cid, c in report["criteria"].items()
                if cid in meta and c["status"] in ("fail", "review")]
     failing.sort(key=lambda cid: (0 if meta[cid]["level"] <= sc["level"] else 1,
                                   abs(meta[cid]["level"] - sc["level"]),
                                   DIFFICULTY_ORDER[meta[cid]["difficulty"]]))
     return [{"criterion": cid, "title": meta[cid]["name"], "why": report["criteria"][cid].get("rationale", ""),
-             "how": meta[cid]["fix"]} for cid in failing[:3]]
+             "how": meta[cid]["fix"], "lane": meta[cid].get("lane")} for cid in failing[:3]]
 
 
 def update_history(path, report, sc):
     entry = {"generated_at": report.get("generated_at"), "commit": (report.get("repo") or {}).get("commit"),
+             "rubric": f"{CRITERIA['version']}:{len(CRITERIA['criteria'])}",
              "level": sc["level"], "rate": round(sc["overall"]["rate"], 4),
              "pillars": {p["id"]: round(p["rate"], 4) for p in sc["pillars"]}}
     rows = []
@@ -202,8 +214,9 @@ def update_history(path, report, sc):
                 rows.append(json.loads(line))
             except ValueError:
                 continue
-    if rows and rows[-1].get("commit") and rows[-1].get("commit") == entry["commit"]:
-        rows[-1] = entry  # re-run on the same commit replaces, so the trend shows real changes
+    if rows and rows[-1].get("commit") and rows[-1].get("commit") == entry["commit"] \
+            and rows[-1].get("rubric") == entry["rubric"]:
+        rows[-1] = entry  # a re-run on the same commit and rubric replaces; a rubric change gets its own point
     else:
         rows.append(entry)
     path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
@@ -233,10 +246,17 @@ def markdown(report, sc, acts, unresolved):
     lines += ["", "| Pillar | Passing |", "|---|---|"]
     for p in sc["pillars"]:
         lines.append(f"| {p['name']} | {pct(p['rate'])} ({p['passed']:g}/{p['applicable']}) |")
+    lane_name = {l["id"]: l["name"] for l in CRITERIA.get("lanes", [])}
+    lc = sc.get("lanes") or {}
+    if sum(lc.values()):
+        lines += ["", "**Fix lanes:** " + " · ".join(f"{lc.get(l['id'], 0)} {l['name'].lower()}"
+                                                     for l in CRITERIA.get("lanes", []))
+                  + (f" · {sc['waived']} waived by the team" if sc.get("waived") else "")]
     if acts:
         lines += ["", "## Highest-impact next steps", ""]
         for i, a in enumerate(acts, 1):
-            lines.append(f"{i}. **{a.get('title')}** (`{a.get('criterion')}`): {a.get('how') or ''}".rstrip())
+            tag = f" [{lane_name[a['lane']]}]" if a.get("lane") in lane_name else ""
+            lines.append(f"{i}. **{a.get('title')}**{tag} (`{a.get('criterion')}`): {a.get('how') or ''}".rstrip())
             if a.get("why"):
                 lines.append(f"   - Now: {a['why']}")
     blocking = [cid for cid, c in report["criteria"].items() if cid in meta and meta[cid]["level"] <= sc["level"]
@@ -270,6 +290,11 @@ def main():
     ap.add_argument("--no-history", action="store_true", help="don't append to history.jsonl")
     ap.add_argument("--json", action="store_true", help="print the computed score as JSON instead of markdown")
     args = ap.parse_args()
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")  # pipes on Windows default to cp1252
+        except (AttributeError, ValueError):
+            pass
 
     src = Path(args.report).resolve()
     report = json.loads(src.read_text(encoding="utf-8"))

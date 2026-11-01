@@ -6,7 +6,7 @@ criterion has a provisional status: pass / fail / skip from file, config,
 git and platform-CLI checks, or "review" where judgment is needed. The agent
 running the skill confirms or overrides each entry, then runs report.py.
 
-Standard library only. Python 3.8+.
+Standard library only. Python 3.10+.
 
     python scan.py [REPO] [--out DIR] [--offline] [--apps apps/web=web,apps/api=service]
 """
@@ -24,7 +24,7 @@ from pathlib import Path
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 CRITERIA = json.loads((SKILL_DIR / "references" / "criteria.json").read_text(encoding="utf-8"))
-SKILL_VERSION = "0.1.0"
+SKILL_VERSION = "0.2.0"
 SCHEMA_VERSION = 1
 
 ALWAYS_EXCLUDED = {".git", "node_modules", "vendor", ".venv", "venv", "__pycache__", ".next", ".nuxt",
@@ -56,6 +56,11 @@ AGENT_FILES = ["AGENTS.md", "CLAUDE.md", "GEMINI.md", ".cursorrules", ".windsurf
 AGENT_DIRS = [".claude/", ".cursor/", ".codex/", ".factory/", ".agents/", ".gemini/", ".windsurf/", ".roo/",
               ".kiro/", ".clinerules/", ".continue/", ".amp/", ".opencode/", ".github/copilot-instructions.md",
               ".github/instructions/", ".github/prompts/"]
+MCP_FILES = [".mcp.json", ".cursor/mcp.json", ".vscode/mcp.json", ".gemini/settings.json", ".codex/config.toml",
+             "opencode.json", "opencode.jsonc", ".roo/mcp.json", ".kiro/settings/mcp.json", ".github/copilot/mcp.json",
+             ".cline/mcp.json", ".factory/mcp.json"]
+AGENT_SETTINGS = [".claude/settings.json", ".codex/config.toml", ".cursor/cli.json", ".factory/settings.json",
+                  ".gemini/settings.json", "opencode.json", "opencode.jsonc", ".github/copilot/settings.json"]
 AGENT_TRAILER = re.compile(
     r"co-authored-by:.*\b(claude|anthropic|copilot|cursor|codex|openai|droid|factory|devin|aider|gemini|"
     r"jules|openhands|amp|sweep|windsurf|cline|kiro|codegen)\b", re.I)
@@ -167,7 +172,7 @@ class Repo:
         if parts[0] in (".github", ".gitlab", ".circleci", ".husky", ".githooks", ".buildkite", ".devcontainer",
                         ".changeset", ".woodpecker"):
             return True
-        if len(parts) > 4:
+        if len(parts) > 4 or parts[0] in ("docs", "docs_src", "doc", "examples", "website"):
             return False
         if name.endswith((".json", ".jsonc", ".yaml", ".yml", ".toml", ".cfg", ".ini", ".conf", ".hcl",
                           ".properties", ".xml", ".gradle", ".kts", ".neon", ".mk")):
@@ -195,6 +200,11 @@ class Repo:
 
     def exists(self, f):
         return f.lower() in self.lower_map
+
+    def dirs(self):
+        if not hasattr(self, "_dirs"):
+            self._dirs = {"/".join(f.lower().split("/")[:i]) for f in self.files for i in range(1, f.count("/") + 1)}
+        return self._dirs
 
     def find(self, patterns, under="", anchored=False):
         """Glob-match tracked files. Patterns without '/' match basenames anywhere under `under`;
@@ -258,6 +268,8 @@ class Repo:
         "analytics": r"posthog|gtag\(|plausible|umami|amplitude|mixpanel|@vercel/analytics|segment\.(com|io)",
         "pii": r"\bpii\b|personal.?data|gdpr|ccpa|data.?retention|anonymi[sz]",
         "breaker": r"circuit.?breaker|CircuitBreaker|bulkhead",
+        "port_env": r"process\.env\.PORT|env\.PORT|environ(\.get)?\(?\[?['\"]PORT|getenv\(['\"]PORT|"""
+                    r"""env::var\("PORT|Getenv\("PORT|\$\{?PORT""",
     }
 
     def scan_sources(self):
@@ -343,6 +355,13 @@ class GitHub:
         except ValueError:
             return None
 
+    def dynamic_workflows(self):
+        """Workflows GitHub runs without a committed file (CodeQL default setup, Copilot review)."""
+        if not hasattr(self, "_dynamic"):
+            data = self.api(f"repos/{self.slug}/actions/workflows?per_page=100") or {}
+            self._dynamic = [w for w in data.get("workflows", []) if str(w.get("path", "")).startswith("dynamic/")]
+        return self._dynamic
+
     @property
     def default_branch(self):
         return self.info.get("default_branch")
@@ -399,7 +418,7 @@ class App:
         return any(re.search(r, txt, re.I) for r in regexes)
 
     def dep_hits(self, regexes):
-        return [re.search(r, self.manifest_text, re.I).group(0).strip('"') for r in regexes
+        return [re.search(r, self.manifest_text, re.I).group(0).strip('"[]=<> ') for r in regexes
                 if re.search(r, self.manifest_text, re.I)]
 
     def _describe(self, repo):
@@ -791,7 +810,7 @@ def _(repo, apps):
 @check("agentic_development")
 def _(repo, apps):
     hits = repo.find(AGENT_DIRS, "", anchored=True)
-    log = repo.git("log", "-n", "300", "--format=%B")
+    log = repo.git("log", "-n", "2000", "--format=%B", timeout=60)
     trailers = {m.group(1).lower() for m in AGENT_TRAILER.finditer(log)}
     if trailers:
         hits.insert(0, f"agent co-author trailers in recent commits ({', '.join(sorted(trailers))})")
@@ -810,6 +829,9 @@ def _(repo, apps):
         return "pass", f"Automated PR review configured: {short(hits, 3)}"
     gh = repo.gh
     if gh and gh.authed:
+        managed = [w["name"] for w in gh.dynamic_workflows() if re.search(r"review", w.get("path", "") + w.get("name", ""), re.I)]
+        if managed:
+            return "pass", f"GitHub-managed PR review: {short(managed)}"
         prs = gh.cli_json("pr", "list", "--state", "merged", "--limit", "8", "--json", "number") or []
         bots = set()
         for pr in prs[:8]:
@@ -1037,6 +1059,8 @@ def _(repo, app):
     for f in app.manifests + [m for m in repo.manifest_files if "/" not in m]:
         if f.endswith("package.json"):
             t = ((repo.json(f) or {}).get("scripts") or {}).get("test", "")
+            if re.search(r"--watch\b|react-scripts test(?!.*--watchAll=false)", t):
+                return "fail", f"{f} test script runs in watch mode ({t!r}); agents need a command that exits"
             if t and "no test specified" not in t:
                 hits.append(f"{f} test script")
     for mk in repo.find(["Makefile", "justfile", "Taskfile.yml"], app.path) + \
@@ -1214,6 +1238,8 @@ def _(repo, apps):
 
 @check("agents_md_validation")
 def _(repo, apps):
+    if not repo.find(AGENT_FILES + [".cursor/rules/"], ""):
+        return "skip", "No agent instructions to verify yet (agents_md fails)"
     hits = repo.grep([r"AGENTS\.md|CLAUDE\.md|agent.?instructions|copilot-instructions"], repo.ci_files)
     return by_markers(hits, "CI touches agent instructions", "fail", "Nothing verifies agent instructions stay accurate")
 
@@ -1238,7 +1264,8 @@ def _(repo, app):
 def _(repo, apps):
     hits = repo.find([".devcontainer/devcontainer.json", ".devcontainer.json", ".devcontainer/*/devcontainer.json",
                       "flake.nix", "shell.nix", "devbox.json", "devenv.nix", ".gitpod.yml", "Dockerfile.dev",
-                      "dev.Dockerfile", ".mise.toml", "mise.toml", ".tool-versions"], "")
+                      "dev.Dockerfile", ".mise.toml", "mise.toml", ".tool-versions",
+                      ".github/workflows/copilot-setup-steps.y*ml"], "")
     strong = [h for h in hits if not h.endswith((".tool-versions", "mise.toml"))]
     if strong:
         return "pass", f"Reproducible environment: {short(strong, 3)}"
@@ -1272,6 +1299,8 @@ def _(repo, app):
 
 @check("devcontainer_runnable")
 def _(repo, apps):
+    if repo.find([".github/workflows/copilot-setup-steps.y*ml"], ""):
+        return "pass", "copilot-setup-steps.yml provisions the agent environment in Actions on every change"
     if not repo.find([".devcontainer/", ".devcontainer.json", "flake.nix", "shell.nix", "devbox.json", "devenv.nix"], ""):
         return "skip", "No environment definition to verify (devcontainer criterion fails)"
     hits = repo.grep([r"devcontainers/ci|devcontainer (build|up)|nix (build|flake check|develop)|devbox run|"
@@ -1481,6 +1510,8 @@ def _(repo, app):
 
 @check("log_scrubbing")
 def _(repo, app):
+    if app.is_library:
+        return "skip", "Library/CLI"
     hits = repo.source("redact", app, exclude_tests=True)
     if hits:
         return "pass", f"Redaction/scrubbing: {short(hits, 3)}"
@@ -1510,6 +1541,9 @@ def _(repo, apps):
         ds = gh.api(f"repos/{gh.slug}/code-scanning/default-setup")
         if ds and ds.get("state") == "configured":
             return "pass", "GitHub code scanning default setup is configured"
+        codeql = [w["name"] for w in gh.dynamic_workflows() if "code-scanning" in w.get("path", "") and w.get("state") == "active"]
+        if codeql:
+            return "pass", f"GitHub CodeQL default setup runs on PRs ({short(codeql)})"
     return "fail", "No SAST or dependency audit in CI"
 
 
@@ -1538,7 +1572,11 @@ def _(repo, apps):
 def _(repo, apps):
     hits = repo.find([".github/ISSUE_TEMPLATE/", ".github/ISSUE_TEMPLATE.md", "ISSUE_TEMPLATE.md",
                       ".gitlab/issue_templates/"], "")
-    return by_markers(hits, "Issue templates", "fail", "No issue templates")
+    if not hits:
+        return "fail", "No issue templates"
+    if not repo.grep([r"acceptance|expected|reproduc|steps to|definition of done"], hits):
+        return "review", f"Templates exist ({short(hits, 2)}) but don't ask for repro steps or acceptance criteria"
+    return "pass", f"Issue templates with repro/acceptance prompts: {short(hits, 3)}"
 
 
 @check("pr_templates")
@@ -1630,6 +1668,194 @@ def _(repo, apps):
     return "fail", "No error tracking feeding the issue tracker"
 
 
+
+@check("agents_md_lean")
+def _(repo, apps):
+    found = [f for f in repo.find(["AGENTS.md", "CLAUDE.md", "GEMINI.md", "copilot-instructions.md"], "")
+             if "/" not in f or f.startswith(".github/")]
+    if not found:
+        return "skip", "No agent instructions file yet (agents_md fails)"
+    main = max(found, key=lambda f: len(repo.text(f)))
+    txt = repo.text(main)
+    lines = txt.count("\n") + 1
+    dirs = repo.dirs()
+    norm = lambda r: re.sub(r"^(\./)+", "", r).rstrip("/")
+    refs = {r for r in re.findall(r"`((?:\.\.?/)?[\w.-][\w.@-]*(?:/[\w.@*-]+)+/?)`", txt)
+            if not r.startswith("../") and not re.match(
+                r"(node_modules|\.venv|dist|build|out|target|coverage|\.agent-readiness)(/|$)", norm(r))}
+    known = {f.lower() for f in repo.files} | dirs
+
+    def resolves(r):
+        n = norm(r).lower()
+        # exact, or relative to some app/package dir (docs often write paths from an app's root)
+        return n in known or any(k.endswith("/" + n) for k in known)
+    # hidden basenames (.dev.vars, .env.local) are usually local files the docs tell you to create
+    missing = sorted(r for r in refs if "*" not in r and not norm(r).rsplit("/", 1)[-1].startswith(".")
+                     and not resolves(r))
+    if missing and repo.is_git:
+        # local-only files the docs legitimately mention (.dev.vars, .env.local, caches) are gitignored
+        p = subprocess.run(["git", "check-ignore", "--stdin"], cwd=repo.root, input="\n".join(norm(m) for m in missing),
+                           capture_output=True, text=True)
+        ignored = set(p.stdout.split())
+        missing = [m for m in missing if norm(m) not in ignored]
+    problems = []
+    if lines > 200:
+        problems.append(f"{lines} lines (aim for about 200 or fewer)")
+    if missing:
+        problems.append(f"references paths that don't exist: {short(missing, 3)}")
+    if problems:
+        return "fail", f"{main}: " + "; ".join(problems)
+    note = " (starts with the /init boilerplate header; check it was edited)" if \
+        "This file provides guidance to Claude Code" in txt[:400] else ""
+    return "pass", f"{main}: {lines} lines; all {len(refs)} referenced paths exist{note}"
+
+
+@check("scoped_instructions")
+def _(repo, apps):
+    nested = [f for f in repo.find(["AGENTS.md", "CLAUDE.md"], "") if "/" in f and not f.startswith((".github/", ".claude/"))]
+    scoped = repo.find([".claude/rules/", ".github/instructions/", ".cursor/rules/", ".agents/rules/", ".clinerules/",
+                        ".windsurf/rules/"], "", anchored=True)
+    skills = [f for f in repo.find([".claude/skills/", ".agents/skills/", ".factory/skills/", ".cursor/skills/",
+                                    ".github/skills/", ".cline/skills/", ".opencode/skills/"], "", anchored=True)
+              if f.endswith("SKILL.md")]
+    hits = nested + scoped + skills
+    if hits:
+        return "pass", f"Scoped instructions: {short(hits, 3)}"
+    real = [f for f in repo.files if os.path.splitext(f)[1].lower() in LANG_EXT
+            and not re.match(r"(docs|docs_src|doc|examples?|tests?|spec|scripts|website)/", f)
+            and not re.search(r"(^|/)(tests?|__tests__|spec)/|[._-](test|spec)\.", f)]
+    if len(real) < 100:
+        return "skip", f"Small codebase ({len(real)} source files outside tests and docs); one instructions file is enough"
+    return "fail", f"No nested AGENTS.md, path-scoped rules or skills for a {len(real)}-file codebase"
+
+
+@check("single_test_command")
+def _(repo, app):
+    if not test_files(repo, app) and not ("Rust" in app.languages and repo.source("rust_test", app)):
+        return "fail", "No tests to run"
+    docs = [f for f in repo.find(AGENT_FILES + ["README*", "CONTRIBUTING*", "docs/contributing*", "TESTING*"], "")
+            if f.count("/") <= 2]
+    hits = repo.grep([r"pytest\s+\S+::|pytest\s+[\w./-]*\s*-k\s|vitest(\s+run)?\s+[\w./-]+|jest\s+[\w./-]+\.(test|spec)|"
+                      r"go test\s.*-run\s|cargo test\s+[\w:]+|--testNamePattern|-t\s+['\"]|rspec\s+\S+:\d+|"
+                      r"--grep\s|single test|one test|specific test|individual test|a test file"], docs)
+    return by_markers(hits, "Single-test command documented", "fail",
+                      "Docs don't show how to run a single test file or case")
+
+
+@check("browser_automation")
+def _(repo, app):
+    if app.is_library or not app.is_frontend:
+        return "skip", "No web UI"
+    hits = repo.find(["playwright.config.*", "cypress.config.*", "cypress.json"], app.path)
+    hits += app.dep_hits([r'"@playwright/test"', r'"playwright"', r'"cypress"', r'"puppeteer"'])
+    hits += repo.grep([r"playwright|puppeteer|chrome-devtools|browser"], [f for f in MCP_FILES if repo.exists(f)])
+    return by_markers(hits, "Browser automation available", "fail",
+                      "Web UI with no browser automation for agents to check their work")
+
+
+@check("parallel_agent_isolation")
+def _(repo, apps):
+    if all(a.is_library for a in apps):
+        return "skip", "Library; no services to collide"
+    hits = repo.find([".worktreeinclude"], "")
+    docs = [f for f in repo.find(AGENT_FILES + ["README*", "CONTRIBUTING*"], "") if f.count("/") <= 1]
+    hits += repo.grep([r"worktree"], docs)
+    env_ports = [f for a in apps for f in repo.source("port_env", a, exclude_tests=True)]
+    if hits and env_ports:
+        return "pass", f"Worktree setup ({short(hits, 2)}) and env-driven ports ({short(env_ports, 2)})"
+    return "review", ("Ports read from env in " + short(env_ports, 2) if env_ports else "No env-driven ports found") + \
+        ("; worktree setup documented" if hits else "; no worktree setup documented") + \
+        ". Check for hardcoded ports and shared test databases"
+
+
+@check("agent_readable_logs")
+def _(repo, apps):
+    if all(a.is_library for a in apps):
+        return "skip", "Library/CLI"
+    hits = []
+    for mk in repo.find(["Makefile", "justfile", "Taskfile.yml"], ""):
+        if re.search(r"^\s*logs?[\w-]*\s*:", repo.text(mk), re.M):
+            hits.append(f"{mk} logs target")
+    for f in repo.find(["package.json"], ""):
+        if any("log" in k for k in ((repo.json(f) or {}).get("scripts") or {})):
+            hits.append(f"{f} logs script")
+    docs = [f for f in repo.find(AGENT_FILES + ["README*", "CONTRIBUTING*"], "") if f.count("/") <= 1]
+    hits += repo.grep([r"docker compose logs|docker-compose logs|tail -f|make logs|\blogs/|\.log\b|wrangler tail|"
+                       r"fly logs|vercel logs|kubectl logs|journalctl"], docs)
+    return by_markers(hits, "Logs reachable on demand", "fail", "No documented way for an agent to read local logs")
+
+
+@check("agent_guardrails_config")
+def _(repo, apps):
+    files = [f for f in AGENT_SETTINGS if repo.exists(f)]
+    hits = repo.grep([r"permissions|\bdeny\b|sandbox|approval_policy|excludeTools|allowedTools|\"permission\""], files)
+    if not hits:
+        return "fail", "No committed agent permission or sandbox config" + \
+            (f" ({short(files)} exist without permission rules)" if files else "")
+    env_denied = repo.grep([r"\.env"], files)
+    return "pass", f"Agent guardrails: {short(hits, 3)}" + ("" if env_denied else "; .env isn't explicitly denied")
+
+
+@check("agent_config_reviewed")
+def _(repo, apps):
+    agent_files = repo.find(AGENT_FILES + AGENT_DIRS + MCP_FILES + ["llm-prompt.md", "*.prompt.md"], "")
+    if not agent_files:
+        return "skip", "No agent instruction or config files yet"
+    owners = [f for f in ("CODEOWNERS", ".github/CODEOWNERS", "docs/CODEOWNERS", ".gitlab/CODEOWNERS") if repo.exists(f)]
+    if not owners:
+        return "fail", "No CODEOWNERS, so agent config changes have no required reviewer"
+    pats = [l.split()[0] for l in repo.text(owners[0]).splitlines()
+            if l.strip() and not l.lstrip().startswith("#") and len(l.split()) > 1]
+    if any(p in ("*", "/*", "/**", "**") for p in pats):
+        return "pass", f"{owners[0]} has a catch-all owner"
+
+    def covered(f):
+        for p in pats:
+            p2 = p.lstrip("/")
+            if p2.endswith("/") and f.startswith(p2) or fnmatch.fnmatch(f, p2) or fnmatch.fnmatch(f.rsplit("/", 1)[-1], p2) \
+                    or f.startswith(p2.rstrip("*").rstrip("/") + "/"):
+                return True
+        return False
+    uncovered = sorted({f.split("/")[0] + ("/" if "/" in f else "") for f in agent_files if not covered(f)})
+    if uncovered:
+        return "fail", f"{owners[0]} doesn't cover {short(uncovered)}"
+    return "pass", f"{owners[0]} covers all agent config files"
+
+
+@check("mcp_config_hygiene")
+def _(repo, apps):
+    files = [f for f in MCP_FILES if repo.exists(f) and re.search(r"mcp", repo.text(f), re.I)]
+    if not files:
+        return "skip", "No MCP config committed"
+    problems = []
+    secrets = repo.grep([r"""["']?(token|api[_-]?key|secret|password|authorization)["']?\s*[:=]\s*["'](?!\$|\{\{|env:|<)[^"'\s]{12,}"""],
+                        files)
+    if secrets:
+        problems.append(f"inline secrets in {short(secrets, 2)}")
+    unpinned = repo.grep([r"@latest\b|\"-y\",\s*\"(@?[\w./-]+)\"(?![^\]]*@\d)"], files)
+    if unpinned:
+        problems.append(f"unpinned servers in {short(unpinned, 2)}")
+    if problems:
+        return "fail", "; ".join(problems)
+    return "pass", f"MCP configs use env references and pinned servers: {short(files)}"
+
+
+@check("agent_hooks")
+def _(repo, apps):
+    hits = repo.grep([r"PostToolUse|PreToolUse|\"Stop\"|SubagentStop|afterFileEdit|stop"],
+                     [f for f in (".claude/settings.json", ".factory/settings.json", ".cursor/hooks.json") if repo.exists(f)])
+    hits += repo.find([".github/hooks/", ".clinerules/hooks/", ".cline/hooks/", ".codex/hooks/"], "", anchored=True)
+    return by_markers(hits, "Agent hooks configured", "fail", "No agent hooks; checks only run if the agent remembers")
+
+
+@check("plans_in_repo")
+def _(repo, apps):
+    hits = repo.find(["plans/", "docs/plans/", ".cursor/plans/", "docs/exec-plans/", "exec-plans/", "specs/",
+                      "docs/specs/", ".kiro/specs/", "PLAN.md", "PLANS.md", "ROADMAP.md", "rfcs/", "docs/rfcs/",
+                      "claude-progress.txt", "progress.md", "feature_list.json", "features.json"], "", anchored=True)
+    return by_markers(hits, "Plans in repo", "fail", "No plans, specs or progress files for agents to pick up")
+
+
 # --- draft assembly -----------------------------------------------------------
 def summarize_apps(per_app, num, den):
     if len(per_app) == 1:
@@ -1662,6 +1888,12 @@ def build_draft(repo, apps, tool, truncated, out_dir):
         except ValueError:
             previous = None
 
+    prefs_path = out_dir / "preferences.json"
+    try:
+        waivers = (json.loads(prefs_path.read_text(encoding="utf-8")).get("waivers") or {}) if prefs_path.exists() else {}
+    except ValueError:
+        waivers = {}
+
     criteria = {}
     for c in CRITERIA["criteria"]:
         fn = CHECKS.get(c["id"])
@@ -1686,6 +1918,12 @@ def build_draft(repo, apps, tool, truncated, out_dir):
             entry = {"status": s, "numerator": 1 if s == "pass" else 0, "denominator": 0 if s == "skip" else 1,
                      "rationale": why}
         entry["source"] = "scan"
+        reason = waivers.get(c["id"])
+        if reason:
+            entry.update({"scan_status": entry["status"], "status": "skip", "waived": True,
+                          "rationale": f"Waived by the team: {reason}", "numerator": 0, "denominator": 0})
+            for a in (entry.get("apps") or {}).values():
+                a["status"] = "skip"
         if previous and c["id"] in (previous.get("criteria") or {}):
             p = previous["criteria"][c["id"]]
             entry["previous"] = {"status": p.get("status"), "rationale": p.get("rationale")}

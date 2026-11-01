@@ -23,8 +23,9 @@ Two Agent Skills (`SKILL.md` folders) that score how ready a repository is for c
 | Render a provisional report | `python skills/agent-readiness/scripts/report.py <dir>/draft.json --allow-review` |
 
 ## Rules
-- Scripts must stay **standard library only** and run on Python 3.8+ on Windows, macOS and Linux. CI runs that matrix.
-- Adding or changing a criterion: edit `criteria.json`, add a check in `scan.py` (`@check("id")`), then run `tools/gen_criteria_doc.py` and the tests. A criterion without a scanner check falls back to `review`.
+- Scripts must stay **standard library only** and run on Python 3.10+ on Windows, macOS and Linux. CI runs that matrix.
+- Adding or changing a criterion: edit `criteria.json` (including its `lane`: `auto`, `guided` or `manual`), add a check in `scan.py` (`@check("id")`), then run `tools/gen_criteria_doc.py` and the tests. A criterion without a scanner check falls back to `review`. If it's a "Your call" criterion, add its decision to `skills/agent-readiness-fix/references/playbook.md`.
+- Lanes: `auto` only for small, reversible changes the repo already settles. Anything that picks a tool, adds a required check, adds a service or changes team process is `guided`. Anything outside the repo is `manual`.
 - Scanner checks should be conservative. Return `pass` only on clear evidence, return `fail` only when absence is definitive, and use `review` otherwise. The agent resolves `review` items.
 - Scoring belongs in `report.py`, never in SKILL.md prose. The model decides verdicts and the script does arithmetic.
 - Keep SKILL.md free of harness-specific tool names. Say "run", "read" and "search", not a particular tool's API.

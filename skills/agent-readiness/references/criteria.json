@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "threshold": 0.8,
   "levels": [
     {
@@ -75,6 +75,23 @@
       "why": "Analytics and experiments let an agent see whether a change mattered, not just whether it compiled."
     }
   ],
+  "lanes": [
+    {
+      "id": "auto",
+      "name": "Auto-fix",
+      "summary": "Small, reversible changes decided by facts already in the repo. The agent can apply these directly."
+    },
+    {
+      "id": "guided",
+      "name": "Your call",
+      "summary": "A choice of tool, policy or architecture. The agent lays out options and trade-offs; you decide."
+    },
+    {
+      "id": "manual",
+      "name": "Manual",
+      "summary": "Outside the repo: platform settings or team process. The agent gives exact steps; you do it."
+    }
+  ],
   "criteria": [
     {
       "id": "lint_config",
@@ -83,6 +100,7 @@
       "level": 1,
       "scope": "app",
       "difficulty": "basic",
+      "lane": "guided",
       "pass": "A linter is configured for the app's primary language (ESLint, Biome, Ruff, Flake8, Pylint, golangci-lint, Clippy, RuboCop, Checkstyle, SwiftLint, ktlint, etc.).",
       "fix": "Add the ecosystem-default linter with a committed config and a `lint` script/target."
     },
@@ -93,6 +111,7 @@
       "level": 1,
       "scope": "app",
       "difficulty": "basic",
+      "lane": "guided",
       "pass": "The language is statically typed (Go, Rust, Java, C#, Kotlin, Swift, C/C++), or a type checker is configured (tsconfig.json, mypy, pyright, Sorbet, etc.).",
       "fix": "Add TypeScript/tsconfig or mypy/pyright with a `typecheck` command."
     },
@@ -103,6 +122,7 @@
       "level": 1,
       "scope": "app",
       "difficulty": "basic",
+      "lane": "guided",
       "pass": "An automatic formatter is configured or built into the toolchain and used (Prettier, Biome, Black, Ruff format, gofmt, rustfmt, clang-format, etc.).",
       "fix": "Add the ecosystem formatter with a config file and a `format` command."
     },
@@ -113,6 +133,7 @@
       "level": 2,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Type checking runs in strict mode (`strict: true` in tsconfig, mypy `strict = true`, pyright `strict`), or the language is statically typed by default.",
       "fix": "Turn on strict mode; fix or explicitly suppress the resulting errors."
     },
@@ -123,8 +144,20 @@
       "level": 2,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "guided",
       "pass": "Local hooks run lint/format/type checks before commit (pre-commit, Husky, lefthook, simple-git-hooks, lint-staged, a committed .githooks/ wired via core.hooksPath).",
       "fix": "Add pre-commit/Husky/lefthook running the fast checks on staged files."
+    },
+    {
+      "id": "agent_hooks",
+      "name": "Checks run as the agent edits",
+      "pillar": "style",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "lane": "guided",
+      "pass": "Agent hooks run fast checks automatically after edits or before finishing (Claude Code/Droid hooks in settings, .cursor/hooks.json, Copilot or Cline hooks), so formatting and type errors are caught without relying on instructions.",
+      "fix": "Add a post-edit hook that runs the formatter and a stop hook that runs lint + typecheck."
     },
     {
       "id": "naming_consistency",
@@ -133,6 +166,7 @@
       "level": 2,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "auto",
       "pass": "Naming conventions are documented (AGENTS.md, CONTRIBUTING, style guide) or enforced by lint rules (e.g. ESLint naming-convention, pep8-naming).",
       "fix": "Document conventions in AGENTS.md and/or enable a naming lint rule."
     },
@@ -143,6 +177,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "auto",
       "pass": "Something prevents large/binary files from landing in git: Git LFS via .gitattributes, a check-added-large-files hook, or a CI size check.",
       "fix": "Add `check-added-large-files` to pre-commit or a CI size check; use LFS for binaries."
     },
@@ -153,6 +188,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "TODO/FIXME comments are tracked or constrained: a lint rule requiring ticket references, a TODO scanner in CI, or a debt register that is maintained.",
       "fix": "Require `TODO(#123)` format via lint rule, or add a TODO scanner to CI."
     },
@@ -163,6 +199,7 @@
       "level": 4,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "A dedicated detector for unused exports, files or functions runs in CI or hooks (knip, ts-prune, vulture, deadcode, unparam). General unused-import/unused-variable lint rules don't count on their own.",
       "fix": "Add knip/vulture/deadcode to CI."
     },
@@ -173,6 +210,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Copy-paste detection runs in CI (jscpd, PMD CPD, SonarQube duplication gate, etc.).",
       "fix": "Add jscpd (or the ecosystem equivalent) with a threshold in CI."
     },
@@ -183,6 +221,7 @@
       "level": 4,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Function complexity is measured and limited (ESLint `complexity`, Ruff C901/mccabe, gocyclo, Clippy cognitive_complexity, Sonar, etc.).",
       "fix": "Enable a complexity rule with a sensible max in the existing linter."
     },
@@ -193,7 +232,8 @@
       "level": 4,
       "scope": "app",
       "difficulty": "advanced",
-      "pass": "Architectural boundaries are enforced by tooling (dependency-cruiser, eslint-plugin-boundaries, Nx module boundaries, import-linter, ArchUnit, Go internal/ packages used deliberately).",
+      "lane": "guided",
+      "pass": "Architectural boundaries are enforced by tooling (dependency-cruiser, eslint-plugin-boundaries, Nx module boundaries, import-linter, ArchUnit, Go internal/ packages used deliberately), ideally with error messages that say how to fix the violation.",
       "fix": "Add dependency-cruiser/import-linter rules for the main layers."
     },
     {
@@ -203,6 +243,7 @@
       "level": 4,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Apps that use an ORM/database have N+1 detection (Bullet, nplusone, Django assertNumQueries patterns, Prisma/Hibernate query logging checks). Skip if the app has no database access.",
       "fix": "Add an N+1 detector in test mode."
     },
@@ -213,6 +254,7 @@
       "level": 1,
       "scope": "app",
       "difficulty": "basic",
+      "lane": "auto",
       "pass": "The exact commands to install, build and run are written down (README, AGENTS.md, CONTRIBUTING) or exposed as obvious scripts (package.json scripts, Makefile, justfile, Taskfile).",
       "fix": "Add a 'Commands' section to AGENTS.md listing install/build/test/lint/run."
     },
@@ -223,6 +265,7 @@
       "level": 1,
       "scope": "app",
       "difficulty": "basic",
+      "lane": "auto",
       "pass": "A lockfile is committed (package-lock.json, pnpm-lock.yaml, yarn.lock, bun.lock(b), uv.lock, poetry.lock, Pipfile.lock, Cargo.lock for binaries, go.sum, Gemfile.lock, composer.lock, etc.).",
       "fix": "Generate and commit the lockfile; stop ignoring it."
     },
@@ -233,6 +276,7 @@
       "level": 2,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "manual",
       "pass": "The hosting platform's CLI (gh, glab, az repos, etc.) is installed and authenticated in the environment the agent runs in, so it can open PRs and read CI/issue state.",
       "fix": "Install and authenticate `gh`/`glab` in the dev environment or devcontainer."
     },
@@ -243,6 +287,7 @@
       "level": 2,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "A fresh clone can be bootstrapped with one documented command (`make setup`, `./scripts/bootstrap`, `just setup`, `npm run setup`, devcontainer, `mise install && ...`).",
       "fix": "Add a bootstrap script/target that installs deps, copies env templates and prepares local services."
     },
@@ -253,6 +298,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "guided",
       "pass": "There is evidence agents already work here: agent co-author trailers in recent commits, agent config dirs (.claude/, .cursor/, .codex/, .factory/, .github/copilot-instructions.md), or agent bot PRs.",
       "fix": "Start routing small tasks through an agent; commit its config so the setup is shared."
     },
@@ -263,6 +309,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Pull requests get automated review beyond CI pass/fail: an AI reviewer, a review bot, Danger, or policy bots that comment on PRs.",
       "fix": "Enable an AI code reviewer or Danger rules on PRs."
     },
@@ -273,6 +320,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Releases/deploys are triggered by automation (CD workflow on merge/tag, semantic-release, changesets, release-please, GoReleaser, platform auto-deploy like Vercel/Netlify/Fly connected to the repo).",
       "fix": "Add a CD workflow on merge to main or a tag-driven release tool."
     },
@@ -283,6 +331,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Multi-app repos use workspace tooling (pnpm/npm/yarn workspaces, Turborepo, Nx, Bazel, Pants, Cargo/Go workspaces, uv workspaces). Skip for single-app repos.",
       "fix": "Declare workspaces and add a task runner (Turborepo/Nx) for cross-app commands."
     },
@@ -293,6 +342,7 @@
       "level": 3,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Unused dependencies are detected in CI or hooks (knip, depcheck, deptry, cargo-udeps/machete, `go mod tidy` diff check).",
       "fix": "Add knip/depcheck/deptry/`go mod tidy -diff` to CI."
     },
@@ -303,6 +353,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "The slowest workflow that runs on pull requests typically finishes in about 10 minutes or less (median of recent runs). Fail if there is no CI at all.",
       "fix": "Cache dependencies, split/parallelize jobs, run only affected targets."
     },
@@ -313,6 +364,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "manual",
       "pass": "Releases or deploys happen regularly (e.g. several in the last 90 days, visible via tags, releases, or deploy workflow runs). Skip for libraries with no deploy target only if releases also aren't applicable.",
       "fix": "Automate releases so shipping is cheap; release smaller and more often."
     },
@@ -323,6 +375,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "auto",
       "pass": "Builds are cached or measured: dependency or build caching in CI (actions/cache, setup-* cache), Turborepo/Nx/Bazel remote cache, sccache, or CI timing dashboards and build-time budgets.",
       "fix": "Enable a build cache and track build durations in CI."
     },
@@ -333,6 +386,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "auto",
       "pass": "Changelogs or release notes are generated from commits/PRs (changesets, release-please, semantic-release, git-cliff, GitHub generated notes, conventional commits enforced).",
       "fix": "Adopt conventional commits + release-please/changesets."
     },
@@ -343,6 +397,7 @@
       "level": 4,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Deployed apps have a feature flag system (LaunchDarkly, Unleash, GrowthBook, Flagsmith, PostHog flags, Statsig, OpenFeature, or a deliberate in-house system). Skip for libraries/CLIs.",
       "fix": "Introduce a flag provider (OpenFeature-compatible) so risky changes can ship dark."
     },
@@ -353,6 +408,7 @@
       "level": 4,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Frontend/bundled apps have a size budget or analyzer in CI (size-limit, bundlesize, bundle analyzer with thresholds, Lighthouse CI budgets). Skip for non-bundled apps.",
       "fix": "Add size-limit or a bundle budget check to CI."
     },
@@ -363,6 +419,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Monorepos keep shared dependency versions aligned (syncpack, manypkg, pnpm catalogs, Renovate group rules, Bazel/Gradle version catalogs). Skip for single-app repos.",
       "fix": "Add syncpack/manypkg or pnpm catalogs."
     },
@@ -373,6 +430,7 @@
       "level": 5,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Deploys can roll out gradually (canary, percentage rollouts, blue/green, Argo Rollouts, Flagger, platform traffic splitting). Skip for libraries/CLIs.",
       "fix": "Add canary or percentage rollout to the deploy path."
     },
@@ -383,6 +441,7 @@
       "level": 5,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "There is a documented one-step or automatic rollback (platform instant rollback, rollback workflow, Argo/Flagger auto-abort on bad metrics). Skip for libraries/CLIs.",
       "fix": "Document the rollback command; add automatic abort on failed health checks."
     },
@@ -393,6 +452,7 @@
       "level": 5,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Stale feature flags are detected and cleaned up (flag provider stale reports wired to issues, Piranha, a CI check). Skip if there is no flag system.",
       "fix": "Wire stale-flag reports into issues or add a cleanup check."
     },
@@ -403,6 +463,7 @@
       "level": 1,
       "scope": "app",
       "difficulty": "basic",
+      "lane": "guided",
       "pass": "The app has meaningful unit tests (test files alongside or in a tests/ dir; more than a placeholder).",
       "fix": "Add a test framework and a first set of tests around core logic."
     },
@@ -413,8 +474,20 @@
       "level": 1,
       "scope": "app",
       "difficulty": "basic",
-      "pass": "There is a documented, single command that runs the tests locally without special credentials (`npm test`, `pytest`, `go test ./...`, `cargo test`, `make test`).",
+      "lane": "auto",
+      "pass": "There is a documented, single command that runs the tests locally without special credentials and exits on its own (no watch mode or prompts): `npm test`, `pytest`, `go test ./...`, `cargo test`, `make test`.",
       "fix": "Expose one `test` command and document it in AGENTS.md."
+    },
+    {
+      "id": "single_test_command",
+      "name": "Single-test command documented",
+      "pillar": "testing",
+      "level": 2,
+      "scope": "app",
+      "difficulty": "basic",
+      "lane": "auto",
+      "pass": "Docs show how to run one test file or case (e.g. `pytest path::test_x`, `vitest run file`, `go test -run Name`, `cargo test name`), so agents can iterate without running the whole suite.",
+      "fix": "Add a one-line 'run a single test' example to AGENTS.md."
     },
     {
       "id": "test_naming_conventions",
@@ -423,6 +496,7 @@
       "level": 2,
       "scope": "app",
       "difficulty": "basic",
+      "lane": "auto",
       "pass": "Test files follow a consistent, tool-recognized pattern (*.test.ts, *_test.go, test_*.py, configured testMatch/testpaths).",
       "fix": "Pick one pattern and configure the runner to match it."
     },
@@ -433,8 +507,20 @@
       "level": 3,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "There are tests that exercise components together or end to end (integration/ or e2e/ suites, Playwright, Cypress, testcontainers, API tests against a running service).",
       "fix": "Add an integration or Playwright/E2E suite for the critical path."
+    },
+    {
+      "id": "browser_automation",
+      "name": "Agent can see the running app",
+      "pillar": "testing",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "lane": "guided",
+      "pass": "Web apps give agents a way to check the real UI: Playwright/Cypress runnable locally and documented for agents, or a browser automation MCP server configured (.mcp.json, .cursor/mcp.json, .vscode/mcp.json). Skip for apps without a UI.",
+      "fix": "Add a Playwright smoke test for the main flow and document the command, or configure a browser MCP server."
     },
     {
       "id": "test_isolation",
@@ -443,6 +529,7 @@
       "level": 3,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Tests are isolated and parallel-safe: run in parallel (pytest-xdist, Jest/Vitest workers, go test -race/-parallel), use fixtures/factories, no shared mutable global state or order dependence.",
       "fix": "Enable parallel test runs and fix order-dependent tests."
     },
@@ -453,6 +540,7 @@
       "level": 3,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Coverage is measured and either enforced with a threshold or reported on PRs (coverage thresholds in config, Codecov/Coveralls, CI coverage gate).",
       "fix": "Collect coverage in CI and set a floor that ratchets upward."
     },
@@ -463,6 +551,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Flaky tests are detected or quarantined (retry-and-report, quarantine lists, Trunk/BuildPulse/Datadog CI visibility, stress-run jobs, flaky-test issue automation).",
       "fix": "Turn on test retries with reporting, and quarantine known-flaky tests."
     },
@@ -473,6 +562,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Test durations or benchmarks are tracked (slowest-test reporting, --durations in CI, benchmark workflows, CI analytics).",
       "fix": "Report slowest tests in CI; add benchmarks for hot paths."
     },
@@ -483,6 +573,7 @@
       "level": 1,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "auto",
       "pass": "A README exists and explains what the project is and how to get it running (not just a title or template boilerplate).",
       "fix": "Write a README with purpose, setup, and run/test commands."
     },
@@ -493,8 +584,20 @@
       "level": 2,
       "scope": "repo",
       "difficulty": "basic",
-      "pass": "An agent instructions file exists with real, repo-specific content: AGENTS.md (the cross-harness standard), or a harness-specific equivalent (CLAUDE.md, GEMINI.md, .cursor/rules, .github/copilot-instructions.md, .windsurfrules). Must cover commands and conventions, not just a stub.",
-      "fix": "Create AGENTS.md: project map, commands (install/build/test/lint), conventions, gotchas. Symlink or reference it from harness-specific files."
+      "lane": "guided",
+      "pass": "An agent instructions file exists with real, repo-specific content: AGENTS.md (read by nearly every harness) or a harness-specific equivalent (CLAUDE.md, GEMINI.md, .cursor/rules, .github/copilot-instructions.md, .clinerules). It must give commands and conventions, not just a stub or a generic overview.",
+      "fix": "Write a short AGENTS.md: exact commands first, then conventions and gotchas only a teammate would know. Skip the directory tour; generated overviews measurably don't help agents."
+    },
+    {
+      "id": "agents_md_lean",
+      "name": "Agent instructions stay lean and accurate",
+      "pillar": "docs",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "lane": "guided",
+      "pass": "The main agent instructions file is concise (about 200 lines or fewer), isn't an unedited generated dump, and every file path and script it references exists. Longer material lives in linked docs or scoped rules. Skip if there is no agent instructions file yet (agents_md fails).",
+      "fix": "Cut the file to commands, conventions and gotchas; move reference material into docs/ and link to it; fix any stale paths."
     },
     {
       "id": "documentation_freshness",
@@ -503,6 +606,7 @@
       "level": 2,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "auto",
       "pass": "Key docs in the repo (README, AGENTS.md or equivalent, CONTRIBUTING) were each updated within 180 days of the repository's latest commit, so they move with the code. A stub that only links elsewhere counts as present but not substantive.",
       "fix": "Review and refresh README/AGENTS.md against the current commands."
     },
@@ -513,8 +617,20 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Reusable agent skills or commands for working on this repo are committed where harnesses discover them (.claude/skills, .agents/skills, .factory/skills, .codex/skills, .cursor/skills, .github/skills, or custom slash-command/prompt dirs). Skills shipped as package data for end users don't count.",
       "fix": "Capture a repeated workflow (release, migration, debugging) as a SKILL.md."
+    },
+    {
+      "id": "scoped_instructions",
+      "name": "Scoped instructions",
+      "pillar": "docs",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "lane": "guided",
+      "pass": "Instructions load only where they're relevant: nested AGENTS.md in subprojects, path-scoped rules (.claude/rules with paths, .github/instructions/*.instructions.md with applyTo, .cursor/rules with globs), or skills. Skip for small codebases (under ~100 source files, not counting tests and docs).",
+      "fix": "Move area-specific guidance out of the root file into nested AGENTS.md files or path-scoped rules."
     },
     {
       "id": "api_schema_docs",
@@ -523,6 +639,7 @@
       "level": 3,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Apps that expose an API publish a machine-readable schema (OpenAPI/Swagger, GraphQL SDL, protobuf, tRPC/zod schemas exported, JSON Schema). Skip for apps with no API surface.",
       "fix": "Generate an OpenAPI spec (or SDL) from the code and commit/serve it."
     },
@@ -533,6 +650,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "auto",
       "pass": "Architecture or key flows are documented (ARCHITECTURE.md, docs/ with diagrams, Mermaid/PlantUML, ADRs) beyond what the README says.",
       "fix": "Add ARCHITECTURE.md with a component map and one or two key request flows."
     },
@@ -543,6 +661,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Some docs are generated from source and kept in sync automatically (TypeDoc, Sphinx autodoc, rustdoc/godoc published, OpenAPI generation in CI, docs site build).",
       "fix": "Generate API/reference docs in CI."
     },
@@ -553,7 +672,8 @@
       "level": 5,
       "scope": "repo",
       "difficulty": "advanced",
-      "pass": "Something checks that the agent instructions stay true: a CI job that runs the documented commands, an automated AGENTS.md updater, or a scheduled agent that refreshes it.",
+      "lane": "guided",
+      "pass": "Something keeps agent instructions true: a CI job that runs the documented commands or checks referenced paths, an automated AGENTS.md updater, or a scheduled agent/job that gardens stale docs. Skip if there are no agent instructions yet.",
       "fix": "Add a CI job that executes the commands listed in AGENTS.md."
     },
     {
@@ -563,6 +683,7 @@
       "level": 2,
       "scope": "app",
       "difficulty": "basic",
+      "lane": "auto",
       "pass": "Required environment variables are documented in a committed template (.env.example, .env.sample, .env.template) or a documented config section. Skip if the app needs no env configuration.",
       "fix": "Commit .env.example listing every variable with a safe placeholder and a comment."
     },
@@ -573,7 +694,8 @@
       "level": 2,
       "scope": "repo",
       "difficulty": "intermediate",
-      "pass": "A reproducible dev environment is defined: .devcontainer/devcontainer.json, Nix flake/shell, devbox.json, or a Dockerfile/compose setup documented for development.",
+      "lane": "guided",
+      "pass": "A reproducible, non-interactive dev environment is defined: .devcontainer/devcontainer.json, Nix flake/shell, devbox.json, a documented dev Dockerfile/compose setup, or an agent setup file such as .github/workflows/copilot-setup-steps.yml.",
       "fix": "Add .devcontainer/devcontainer.json with the toolchain and post-create setup."
     },
     {
@@ -583,6 +705,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Backing services (DB, cache, queues) can be started locally with one command (docker-compose, Tilt, Skaffold, supabase start, testcontainers). Skip if there are no backing services.",
       "fix": "Add compose.yaml for the backing services and document `docker compose up`."
     },
@@ -593,6 +716,7 @@
       "level": 3,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Apps that use a database manage schema as code (migrations dir, Prisma/Drizzle schema, Alembic, Rails/Django migrations, Flyway, Atlas). Skip if there is no database.",
       "fix": "Adopt a migration tool and commit the schema."
     },
@@ -603,8 +727,20 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "The reproducible environment is exercised in CI (devcontainers/ci action, Nix build in CI, compose-based test job) so it doesn't rot. Skip if no environment definition exists (devcontainer already fails).",
       "fix": "Build the devcontainer (or Nix shell) in CI."
+    },
+    {
+      "id": "parallel_agent_isolation",
+      "name": "Parallel-agent friendly",
+      "pillar": "devenv",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "lane": "guided",
+      "pass": "Several agents can work at once without colliding: ports and database URLs come from env, test databases are ephemeral or per-run, and setup works in a fresh git worktree (.worktreeinclude or documented). Skip for libraries without services.",
+      "fix": "Read PORT/DATABASE_URL from env, give tests their own database, and document worktree setup."
     },
     {
       "id": "structured_logging",
@@ -613,8 +749,20 @@
       "level": 3,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Deployed services log through a structured logger (pino, winston JSON, structlog, zap, slog, tracing, logback JSON) instead of bare print/console.log. Skip for libraries.",
       "fix": "Adopt a structured logger with request/trace IDs in every line."
+    },
+    {
+      "id": "agent_readable_logs",
+      "name": "Logs an agent can read",
+      "pillar": "observability",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "basic",
+      "lane": "auto",
+      "pass": "Local dev logs go somewhere an agent can read on demand (a log file, `make logs`, `docker compose logs`, a documented command) rather than only an interactive terminal. Skip for libraries and CLIs.",
+      "fix": "Add a `logs` script or make target and mention it in AGENTS.md."
     },
     {
       "id": "distributed_tracing",
@@ -623,6 +771,7 @@
       "level": 3,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Services emit traces (OpenTelemetry, Datadog APM, Honeycomb, Sentry performance, X-Ray) with trace context propagated. Skip for libraries/CLIs.",
       "fix": "Add OpenTelemetry auto-instrumentation and export to your backend."
     },
@@ -633,6 +782,7 @@
       "level": 3,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Services expose or ship runtime metrics (Prometheus client, StatsD, OpenTelemetry metrics, Datadog, platform analytics). Skip for libraries/CLIs.",
       "fix": "Expose RED metrics (rate, errors, duration) via OpenTelemetry or Prometheus."
     },
@@ -643,6 +793,7 @@
       "level": 3,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Errors are captured with context (Sentry, Bugsnag, Rollbar, Honeybadger, Datadog error tracking) including release/user/request tags. Skip for libraries.",
       "fix": "Add Sentry (or equivalent) with release and environment tags."
     },
@@ -653,6 +804,7 @@
       "level": 3,
       "scope": "app",
       "difficulty": "basic",
+      "lane": "auto",
       "pass": "Services expose health/readiness endpoints or probes (/health, /healthz, /ready, k8s probes, platform health checks). Skip for libraries/CLIs/static sites.",
       "fix": "Add /healthz (liveness) and /readyz (dependencies) endpoints."
     },
@@ -663,6 +815,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Alert rules are defined as code or documented (Prometheus/Alertmanager rules, Datadog/Grafana monitors-as-code, PagerDuty/Opsgenie integration, Sentry alert rules referenced). Skip for libraries.",
       "fix": "Define alerts as code for error rate and latency SLOs."
     },
@@ -673,6 +826,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Deploys are visible in monitoring (release markers in Sentry/Datadog, deploy annotations, dashboards linked from docs) so regressions can be tied to a release. Skip for libraries.",
       "fix": "Send release/deploy markers from the deploy workflow."
     },
@@ -683,6 +837,7 @@
       "level": 4,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Performance can be profiled in a standard way (pprof endpoints, continuous profiling like Pyroscope/Datadog, documented profiling scripts, benchmark harnesses).",
       "fix": "Expose pprof/py-spy recipes or enable continuous profiling."
     },
@@ -693,6 +848,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Operational runbooks exist (runbooks/ or docs/ops, incident playbooks, linked from alerts or docs). Skip for libraries.",
       "fix": "Write runbooks for the top alerts and common incidents."
     },
@@ -703,6 +859,7 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Code health is measured over time (coverage trend, SonarQube/CodeClimate/Codacy, DeepSource, CI-published quality reports).",
       "fix": "Publish coverage and lint debt to a dashboard or PR comments."
     },
@@ -713,6 +870,7 @@
       "level": 5,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Calls to external dependencies use circuit breakers/bulkheads/timeouts via a library or mesh (opossum, resilience4j, Polly, pybreaker, gobreaker, Istio/Envoy policies). Skip for apps without external dependencies.",
       "fix": "Wrap outbound calls with timeouts + a circuit breaker library."
     },
@@ -723,6 +881,7 @@
       "level": 1,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "auto",
       "pass": ".gitignore excludes secrets (.env, key files), dependency dirs, build output and editor/OS junk for the languages in use, and no such files are tracked.",
       "fix": "Extend .gitignore from the github/gitignore template for each language; untrack anything sensitive."
     },
@@ -733,6 +892,7 @@
       "level": 2,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "manual",
       "pass": "The default branch is protected (branch protection or rulesets requiring PRs/reviews/status checks). Verify with the platform CLI/API when possible.",
       "fix": "Require PRs and passing checks on the default branch."
     },
@@ -743,8 +903,20 @@
       "level": 2,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "guided",
       "pass": "A CODEOWNERS file exists (root, .github/ or docs/) assigning owners to paths.",
       "fix": "Add .github/CODEOWNERS with at least a default owner."
+    },
+    {
+      "id": "agent_config_reviewed",
+      "name": "Agent config is owned",
+      "pillar": "security",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "basic",
+      "lane": "auto",
+      "pass": "Changes to what agents are told are reviewed: CODEOWNERS covers AGENTS.md/CLAUDE.md, .claude/, .cursor/, .agents/, MCP configs and .github/copilot-* (a catch-all `*` owner counts). Skip if the repo has no agent instruction or config files.",
+      "fix": "Add CODEOWNERS entries for agent instruction and config files."
     },
     {
       "id": "secret_scanning",
@@ -753,6 +925,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "guided",
       "pass": "Secrets are scanned for: platform secret scanning/push protection enabled, or gitleaks/trufflehog/detect-secrets in hooks or CI.",
       "fix": "Enable push protection, or add gitleaks to pre-commit and CI."
     },
@@ -763,6 +936,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "auto",
       "pass": "Dependency updates are automated (Dependabot config, Renovate config, or equivalent).",
       "fix": "Add .github/dependabot.yml or renovate.json."
     },
@@ -773,8 +947,20 @@
       "level": 3,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Runtime secrets come from a manager or platform store (env injected by platform, Vault, AWS/GCP/Azure secret managers, Doppler, 1Password, SOPS) and no secrets are hardcoded in source.",
       "fix": "Move secrets to the platform's secret store; read them from env at runtime."
+    },
+    {
+      "id": "agent_guardrails_config",
+      "name": "Agent guardrails in config",
+      "pillar": "security",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "lane": "guided",
+      "pass": "Rules agents must follow are enforced by committed config, not only prose: permission deny/allow lists or sandbox settings (.claude/settings.json, .codex/config.toml, .cursor/ or .factory/ settings, Copilot agent firewall config) that at least keep agents out of secrets like .env.",
+      "fix": "Commit shared agent settings that deny reads of .env and secrets/ and allow the safe dev commands."
     },
     {
       "id": "log_scrubbing",
@@ -783,6 +969,7 @@
       "level": 4,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Logs redact sensitive fields (logger redact config, scrubbing processors, Sentry beforeSend scrubbing). Skip for libraries and CLIs.",
       "fix": "Configure logger redaction paths for tokens, passwords and PII."
     },
@@ -793,6 +980,7 @@
       "level": 4,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Apps that handle personal data have an explicit approach (data classification, PII-tagged fields, encryption at rest for sensitive columns, documented retention). Skip if no personal data.",
       "fix": "Document which fields are PII and how they're protected and retained."
     },
@@ -803,8 +991,20 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "Application source or dependencies are scanned for vulnerabilities on PRs (CodeQL, Semgrep, Snyk, SonarQube security, Bandit, gosec, npm/pip/cargo audit, osv-scanner). Linters that only scan CI workflow files (e.g. zizmor, actionlint) don't count.",
       "fix": "Enable CodeQL or add Semgrep to CI."
+    },
+    {
+      "id": "mcp_config_hygiene",
+      "name": "MCP config hygiene",
+      "pillar": "security",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "lane": "guided",
+      "pass": "Committed MCP server configs keep secrets out (env references only), pin server versions instead of @latest, and don't combine untrusted input, private data and outbound access in one setup. Skip if no MCP config is committed.",
+      "fix": "Replace inline tokens with env references, pin server versions, and drop servers nobody uses."
     },
     {
       "id": "dast_scanning",
@@ -813,6 +1013,7 @@
       "level": 5,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Running web apps are scanned dynamically (OWASP ZAP, Burp, Nuclei, StackHawk) in CI or on a schedule. Skip for non-web apps.",
       "fix": "Run a ZAP baseline scan against a preview deployment."
     },
@@ -823,6 +1024,7 @@
       "level": 5,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "User-facing products that collect personal data have privacy controls in code (consent management, data export/deletion paths, documented DPA/GDPR handling). Skip otherwise.",
       "fix": "Implement data export/deletion flows and consent handling."
     },
@@ -833,7 +1035,8 @@
       "level": 2,
       "scope": "repo",
       "difficulty": "basic",
-      "pass": "Issue templates or forms exist (.github/ISSUE_TEMPLATE/, .gitlab/issue_templates/).",
+      "lane": "auto",
+      "pass": "Issue templates or forms exist (.github/ISSUE_TEMPLATE/, .gitlab/issue_templates/) and ask for reproduction steps or acceptance criteria, so an agent can tell when the work is done.",
       "fix": "Add bug and feature templates that ask for repro steps and acceptance criteria."
     },
     {
@@ -843,6 +1046,7 @@
       "level": 2,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "auto",
       "pass": "A pull/merge request template exists (pull_request_template.md in root, .github/ or docs/; .gitlab/merge_request_templates/).",
       "fix": "Add .github/pull_request_template.md with summary, testing and risk sections."
     },
@@ -853,6 +1057,7 @@
       "level": 3,
       "scope": "repo",
       "difficulty": "basic",
+      "lane": "guided",
       "pass": "Issues use a deliberate label taxonomy beyond the platform defaults (type, area, priority), visible via the platform CLI/API or a labels config file.",
       "fix": "Define type/area/priority labels (labels-as-code if possible)."
     },
@@ -863,8 +1068,20 @@
       "level": 4,
       "scope": "repo",
       "difficulty": "intermediate",
+      "lane": "manual",
       "pass": "Open issues are descriptive and triaged: clear titles, bodies with context, labels applied, stale issues closed. Skip if the repo doesn't use an issue tracker visible to the agent.",
       "fix": "Triage the backlog; add a stale bot and require labels."
+    },
+    {
+      "id": "plans_in_repo",
+      "name": "Plans live in the repo",
+      "pillar": "tasks",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "lane": "guided",
+      "pass": "Upcoming work is written down where agents can read it: a plans/ or docs/plans directory, exec plans or specs, ADRs for pending decisions, or a feature list/progress file maintained across sessions.",
+      "fix": "Create docs/plans/ and keep one short plan per in-flight feature with acceptance criteria."
     },
     {
       "id": "product_analytics_instrumentation",
@@ -873,6 +1090,7 @@
       "level": 4,
       "scope": "app",
       "difficulty": "intermediate",
+      "lane": "guided",
       "pass": "User-facing apps instrument product events (PostHog, Amplitude, Mixpanel, Segment, GA4, Plausible, Vercel Analytics). Skip for libraries, CLIs and internal infrastructure.",
       "fix": "Add an analytics SDK and track the core activation events."
     },
@@ -883,6 +1101,7 @@
       "level": 5,
       "scope": "app",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "User-facing apps can run A/B tests or experiments (GrowthBook, Statsig, Optimizely, PostHog experiments, LaunchDarkly experiments). Skip for libraries, CLIs and infrastructure.",
       "fix": "Use the flag provider's experiments feature for the next feature launch."
     },
@@ -893,6 +1112,7 @@
       "level": 5,
       "scope": "repo",
       "difficulty": "advanced",
+      "lane": "guided",
       "pass": "Production errors or user feedback flow automatically into the task tracker (Sentry/Bugsnag-to-issue integration, feedback-to-issue automation, an agent that files issues from alerts).",
       "fix": "Connect error tracking to the issue tracker so new error groups open issues."
     }

@@ -21,6 +21,8 @@
   --sand: #b5ad90;
   --good: #0ca30c;
   --critical: #d03b3b;
+  --fail-tint: rgba(208, 59, 59, .07);
+  --fail-bar: #d03b3b;
   --tip-bg: #161718;
   --tip-text: #f2f1ec;
   --sans: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
@@ -39,6 +41,8 @@
     --bar: #9aabb8;
     --track: rgba(237, 236, 231, .08);
     --ink: #141617;
+    --fail-tint: rgba(230, 103, 103, .1);
+    --fail-bar: #e66767;
     --tip-bg: #edece7;
     --tip-text: #161718;
   }
@@ -55,6 +59,8 @@
   --bar: #9aabb8;
   --track: rgba(237, 236, 231, .08);
   --ink: #141617;
+  --fail-tint: rgba(230, 103, 103, .1);
+  --fail-bar: #e66767;
   --tip-bg: #edece7;
   --tip-text: #161718;
 }
@@ -79,18 +85,32 @@ button, input, select { font: inherit; color: inherit; }
 .meta b { color: var(--text-2); font-weight: 500; }
 .toggle { background: none; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 3px 12px; cursor: pointer; font-size: 12px; color: var(--text-2); }
 .toggle:hover { border-color: var(--text-2); }
+.banner { color: var(--text-2); padding: 12px 0 0; font-size: 12.5px; display: flex; gap: 8px; align-items: baseline; }
+.banner::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--critical); flex: none; transform: translateY(-1px); }
 
 /* triptych */
 .trip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 28px; margin: 28px 0 8px; background: #4b5154; border-radius: 4px; }
-.panel { position: relative; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 2px; }
-.panel svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.p-grid { background: var(--slate); color: #fff; }
+.panel { position: relative; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 2px; container-type: inline-size; }
+.panel > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.p-slate { background: var(--slate); color: #fff; }
 .p-ink { background: var(--ink); color: #fff; }
 .p-sand { background: var(--sand); color: #1b1d1e; }
-.p-sand .lede { position: absolute; top: 4.5%; left: 6%; right: 6%; margin: 0; font-size: clamp(11px, 1.15vw, 14px); line-height: 1.3; font-weight: 500; letter-spacing: -.005em; }
-.cell { transition: fill-opacity .12s; }
-.cell:hover, .arc:hover { stroke-width: 2.4; }
-.arc { cursor: default; }
+.p-sand .in { position: absolute; inset: 0; padding: 6cqw 6cqw 5cqw; display: flex; flex-direction: column; }
+.p-sand .lede { margin: 0; font-size: 4.6cqw; line-height: 1.28; font-weight: 500; letter-spacing: -.01em; max-width: 64%; }
+.p-sand .ring { position: absolute; top: 4cqw; right: 4cqw; width: 30cqw; height: 30cqw; }
+.p-sand .moves { margin: auto 0 0; padding: 0; list-style: none; }
+.p-sand .moves li { display: grid; grid-template-columns: 7cqw 1fr; gap: 0 2cqw; padding: 2.6cqw 0; border-top: 1px solid rgba(27, 29, 30, .25); }
+.p-sand .moves .n { font-family: var(--mono); font-size: 3cqw; opacity: .7; padding-top: .5cqw; }
+.p-sand .moves b { font-weight: 500; font-size: 3.9cqw; letter-spacing: -.005em; }
+.p-sand .moves li > div { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.p-sand .moves p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.p-sand .moves .lane { display: inline-block; margin-left: 1.6cqw; font-size: 2.6cqw; padding: .2cqw 1.6cqw; border: 1px solid rgba(27, 29, 30, .55); border-radius: 99px; vertical-align: 2px; white-space: nowrap; }
+.p-sand .moves p { grid-column: 2; margin: .6cqw 0 0; font-size: 3.1cqw; line-height: 1.3; opacity: .78; }
+.p-sand .lanes { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(27, 29, 30, .55); padding-top: 2.6cqw; margin-top: 1cqw; }
+.p-sand .lanes div { font-size: 2.8cqw; line-height: 1.2; }
+.p-sand .lanes b { display: block; font-size: 7.2cqw; font-weight: 500; letter-spacing: -.03em; line-height: 1.05; }
+.hit { cursor: default; }
+.sq:hover { stroke: #fff; stroke-width: 1.2; }
 .caption { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; color: var(--muted); font-size: 11px; padding: 0 28px; margin-bottom: 40px; }
 
 /* sections */
@@ -98,6 +118,10 @@ section { border-top: 1px solid var(--rule); padding: 28px 0 36px; display: grid
 .sec-h { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
 .sec-h b { display: block; color: var(--text); font-size: 15px; font-weight: 500; letter-spacing: -.01em; margin-top: 4px; }
 .sec-h p { margin: 10px 0 0; font-size: 12px; line-height: 1.5; max-width: 200px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; vertical-align: 0; margin-right: 5px; }
+.dot.pass { background: var(--bar); }
+.dot.fail { background: var(--fail-bar); }
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--text-2); margin-bottom: 10px; }
 
 .levels { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--rule); }
 .lv { padding: 16px 14px 14px; border-right: 1px solid var(--rule); min-width: 0; }
@@ -112,24 +136,41 @@ section { border-top: 1px solid var(--rule); padding: 28px 0 36px; display: grid
 .track .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--bar); border-radius: 0 4px 4px 0; }
 .track .tick { position: absolute; top: -4px; bottom: -4px; width: 1px; background: var(--text); }
 .lv .state { font-size: 11px; color: var(--text-2); }
+.lv .fails { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+.lv .fails::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--critical); margin-right: 6px; vertical-align: 1px; }
 
 .pillars { display: grid; gap: 2px; }
-.pr { display: grid; grid-template-columns: 200px 1fr 92px; align-items: center; gap: 16px; padding: 7px 0; border-bottom: 1px solid var(--rule); cursor: default; }
+.pr { display: grid; grid-template-columns: 200px 1fr 132px; align-items: center; gap: 16px; padding: 7px 0; border-bottom: 1px solid var(--rule); cursor: default; }
 .pr:last-child { border-bottom: 0; }
 .pr .label { font-weight: 500; font-size: 13px; }
-.pr .why { display: none; }
-.pr .track { margin: 0; height: 8px; }
-.pr .val { text-align: right; font-size: 12px; color: var(--text-2); }
+.stack { display: flex; gap: 2px; height: 10px; background: transparent; }
+.stack span { display: block; height: 100%; }
+.stack .p { background: var(--bar); border-radius: 0; }
+.stack .f { background: var(--fail-bar); border-radius: 0 4px 4px 0; }
+.stack .p:last-child { border-radius: 0 4px 4px 0; }
+.pr .val { text-align: right; font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.pr .val em { font-style: normal; color: var(--muted); }
 .pr:hover .label { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 
-.actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--rule); }
-.act { padding: 18px 16px; border-right: 1px solid var(--rule); min-width: 0; }
+.lanes-grid { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--rule); }
+.lane-col { padding: 18px 16px; border-right: 1px solid var(--rule); min-width: 0; }
+.lane-col:last-child { border-right: 0; }
+.lane-col .k { display: flex; align-items: baseline; gap: 10px; }
+.lane-col .k b { font-size: 28px; font-weight: 500; letter-spacing: -.03em; line-height: 1; }
+.lane-col .k span { font-weight: 500; }
+.lane-col > p { margin: 8px 0 12px; font-size: 12.5px; color: var(--text-2); }
+.lane-col ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.lane-col li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--rule); font-size: 12.5px; }
+.lane-col li .mono { color: var(--muted); font-size: 11px; flex: none; }
+.lane-col .more { color: var(--muted); font-size: 12px; padding-top: 6px; }
+.start { margin-top: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--rule); }
+.act { padding: 14px 16px; border-right: 1px solid var(--rule); min-width: 0; }
 .act:last-child { border-right: 0; }
-.act .i { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.act h3 { font-size: 15px; font-weight: 500; margin: 6px 0 2px; letter-spacing: -.01em; }
-.act code { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.act p { margin: 10px 0 0; font-size: 13px; color: var(--text-2); }
+.act .i { font-family: var(--mono); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+.act h3 { font-size: 14px; font-weight: 500; margin: 6px 0 2px; letter-spacing: -.01em; }
+.act p { margin: 6px 0 0; font-size: 12.5px; color: var(--text-2); }
 .act .now { font-size: 12px; color: var(--muted); }
+.chip { display: inline-block; font-size: 10.5px; border: 1px solid var(--rule-strong); border-radius: 99px; padding: 0 8px; color: var(--text-2); white-space: nowrap; font-family: var(--sans); }
 
 .trend { position: relative; }
 .trend svg { width: 100%; height: auto; display: block; overflow: visible; }
@@ -148,21 +189,30 @@ details.grp > summary { list-style: none; cursor: pointer; padding: 12px 0; disp
 details.grp > summary::-webkit-details-marker { display: none; }
 details.grp > summary .lvn { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 22px; }
 details.grp > summary .t { font-weight: 500; }
+details.grp > summary .f { font-size: 12px; color: var(--text-2); }
+details.grp > summary .f::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--critical); margin-right: 6px; vertical-align: 1px; }
 details.grp > summary .s { color: var(--muted); font-size: 12px; margin-left: auto; }
 details.grp > summary::after { content: "+"; font-family: var(--mono); color: var(--muted); width: 14px; text-align: right; }
 details.grp[open] > summary::after { content: "–"; }
-.crit { display: grid; grid-template-columns: 64px 1fr 150px 44px; gap: 14px; padding: 10px 0 10px 34px; border-top: 1px dashed var(--rule); align-items: baseline; cursor: pointer; }
-.crit:hover { background: linear-gradient(90deg, transparent, var(--track) 30%, var(--track) 70%, transparent); }
-.st { font-size: 11px; display: inline-flex; gap: 5px; align-items: center; color: var(--text-2); }
-.st i { font-style: normal; width: 14px; height: 14px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 9px; color: #fff; font-weight: 700; flex: none; }
+.crit { display: grid; grid-template-columns: 74px 1fr 150px 44px; gap: 14px; padding: 10px 10px 10px 31px; border-top: 1px dashed var(--rule); border-left: 3px solid transparent; align-items: baseline; cursor: pointer; }
+.crit:hover { background: var(--track); }
+.crit.fail, .crit.review { border-left-color: var(--critical); background: var(--fail-tint); }
+.crit.skip { opacity: .62; }
+.st { font-size: 11px; display: inline-flex; gap: 6px; align-items: center; color: var(--text-2); font-weight: 500; }
+.st i { font-style: normal; width: 15px; height: 15px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 9px; color: #fff; font-weight: 700; flex: none; }
 .st.pass i { background: var(--good); }
-.st.fail i { background: var(--critical); }
-.st.review i { background: transparent; border: 1px solid var(--text-2); color: var(--text-2); }
+.st.fail { color: var(--text); }
+.st.fail i { background: var(--critical); border-radius: 3px; }
+.st.review i { background: transparent; border: 1.5px solid var(--critical); color: var(--critical); }
 .st.skip i { background: transparent; border: 1px dashed var(--muted); color: var(--muted); }
 .crit .nm { font-weight: 500; font-size: 13px; }
+.crit.pass .nm { font-weight: 400; }
 .crit .id { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: 8px; }
 .crit .ra { color: var(--text-2); font-size: 12.5px; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.crit.fail .ra, .crit.review .ra { -webkit-line-clamp: 2; color: var(--text); }
 .crit.open .ra { -webkit-line-clamp: unset; }
+.crit .fx { margin-top: 6px; font-size: 12.5px; color: var(--text-2); display: flex; gap: 8px; align-items: baseline; }
+.crit .fx b { font-weight: 500; color: var(--text); }
 .crit .pl { font-size: 12px; color: var(--muted); }
 .crit .sc { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--text-2); }
 .crit .more { display: none; grid-column: 2 / -1; font-size: 12.5px; color: var(--text-2); }
@@ -182,31 +232,24 @@ details.grp[open] > summary::after { content: "–"; }
 
 footer { border-top: 1px solid var(--rule); padding-top: 20px; color: var(--muted); font-size: 12px; display: grid; grid-template-columns: 220px 1fr; gap: 24px; }
 footer p { margin: 0 0 8px; max-width: 70ch; }
-footer a { color: var(--text-2); }
-.banner { color: var(--text-2); padding: 12px 0 0; font-size: 12.5px; display: flex; gap: 8px; align-items: baseline; }
-.banner::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--critical); flex: none; transform: translateY(-1px); }
 
-#tip { position: fixed; pointer-events: none; z-index: 10; background: var(--tip-bg); color: var(--tip-text); padding: 8px 10px; border-radius: 4px; font-size: 12px; line-height: 1.4; max-width: 280px; opacity: 0; transition: opacity .08s; }
+#tip { position: fixed; pointer-events: none; z-index: 10; background: var(--tip-bg); color: var(--tip-text); padding: 8px 10px; border-radius: 4px; font-size: 12px; line-height: 1.4; max-width: 300px; opacity: 0; transition: opacity .08s; }
 #tip b { font-weight: 600; }
 #tip .m { opacity: .7; font-family: var(--mono); font-size: 11px; }
 
 @media (max-width: 980px) {
   .trip { grid-template-columns: 1fr; padding: 16px; }
-  .panel { aspect-ratio: 4 / 5; }
-  .p-sand .lede { font-size: 15px; }
   .caption { grid-template-columns: 1fr; padding: 0 2px; gap: 4px; }
   section, footer { grid-template-columns: 1fr; gap: 14px; }
   .sec-h p { max-width: none; }
-  .levels { grid-template-columns: 1fr; }
-  .lv { border-right: 0; border-bottom: 1px solid var(--rule); }
-  .actions { grid-template-columns: 1fr; }
-  .act { border-right: 0; border-bottom: 1px solid var(--rule); }
+  .levels, .lanes-grid, .start { grid-template-columns: 1fr; }
+  .lv, .lane-col, .act { border-right: 0; border-bottom: 1px solid var(--rule); }
 }
 @media (max-width: 640px) {
   .wrap { padding: 0 16px 48px; }
-  .pr { grid-template-columns: 1fr 72px; }
-  .pr .track { grid-column: 1 / -1; grid-row: 2; }
-  .crit { grid-template-columns: 1fr 44px; padding-left: 0; }
+  .pr { grid-template-columns: 1fr auto; }
+  .pr .stack { grid-column: 1 / -1; grid-row: 2; }
+  .crit { grid-template-columns: 1fr 44px; padding-left: 10px; }
   .crit .st { grid-column: 1 / -1; }
   .crit .pl { display: none; }
   .crit .more { grid-column: 1 / -1; }
@@ -226,31 +269,40 @@ footer a { color: var(--text-2); }
   <div id="banner"></div>
 
   <div class="trip" aria-label="Readiness overview">
-    <div class="panel p-grid" id="pGrid" role="img"></div>
-    <div class="panel p-ink" id="pInk" role="img"></div>
-    <div class="panel p-sand" id="pSand">
+    <div class="panel p-slate" id="pLevel" role="img"></div>
+    <div class="panel p-ink" id="pGaps" role="img"></div>
+    <div class="panel p-sand" id="pNext"><div class="in">
       <p class="lede" id="lede"></p>
-    </div>
+      <svg class="ring" id="ring" viewBox="0 0 120 120" role="img"></svg>
+      <ol class="moves" id="moves"></ol>
+      <div class="lanes" id="laneCounts"></div>
+    </div></div>
   </div>
   <div class="caption">
-    <span>Every criterion, in columns for Levels 1 to 5. Filled cells pass.</span>
-    <span>The level staircase. Unlocked levels are white and locked levels are dimmed.</span>
-    <span>One ring per pillar, inner to outer. Dark arcs pass, faint arcs fail, and gaps are skipped.</span>
+    <span>Level staircase. Each step fills with that level's pass rate; the tick marks the 80% gate to the next step.</span>
+    <span>Gap map. Pillars by level, one square per criterion: white passes, red fails, dots are skipped or waived.</span>
+    <span>Where to start, and how the failures split into what an agent can fix, what you decide, and what you do by hand.</span>
   </div>
 
   <section>
-    <div class="sec-h">01<b>Levels</b><p>Each level unlocks when 80% of the previous level's applicable criteria pass. Skipped criteria don't count.</p></div>
+    <div class="sec-h">01<b>Levels</b><p>Each level unlocks when 80% of the previous level's applicable criteria pass. Skipped and waived criteria don't count.</p></div>
     <div class="levels" id="levels"></div>
   </section>
 
   <section>
-    <div class="sec-h">02<b>Pillars</b><p>Pass rate across all levels for each technical pillar. Hover a row to see why it matters.</p></div>
-    <div class="pillars" id="pillars"></div>
+    <div class="sec-h">02<b>Pillars</b><p>Passing and failing criteria per technical pillar, across all levels. Hover a row to see why it matters.</p></div>
+    <div>
+      <div class="legend"><span><i class="dot pass"></i>Passing</span><span><i class="dot fail"></i>Failing</span></div>
+      <div class="pillars" id="pillars"></div>
+    </div>
   </section>
 
   <section>
-    <div class="sec-h">03<b>Next steps</b><p>The highest-impact gaps for reaching the next level.</p></div>
-    <div class="actions" id="actions"></div>
+    <div class="sec-h">03<b>Fix plan</b><p>Every failing criterion, sorted by who acts. The agent-readiness-fix skill applies the first column, walks you through the second, and gives exact steps for the third.</p></div>
+    <div>
+      <div class="lanes-grid" id="laneGrid"></div>
+      <div class="start" id="actions"></div>
+    </div>
   </section>
 
   <section>
@@ -259,11 +311,12 @@ footer a { color: var(--text-2); }
   </section>
 
   <section>
-    <div class="sec-h">05<b>Criteria</b><p>Every criterion with its evidence. Click a row for per-app results, the pass rule and a suggested fix.</p></div>
+    <div class="sec-h">05<b>Criteria</b><p>Every criterion with its evidence, failures first. Click a row for per-app results and the pass rule.</p></div>
     <div>
       <div class="filters">
         <div class="seg" role="group" aria-label="Status filter" id="segStatus"></div>
         <select id="fPillar" aria-label="Pillar"></select>
+        <select id="fLane" aria-label="Fix lane"></select>
         <input id="fSearch" type="search" placeholder="Search criteria or evidence" aria-label="Search">
         <span class="count" id="count"></span>
       </div>
@@ -272,7 +325,7 @@ footer a { color: var(--text-2); }
   </section>
 
   <section id="appsSec" hidden>
-    <div class="sec-h">06<b>Applications</b><p>Deployable units in this monorepo. App-scoped criteria score as passing apps / evaluated apps.</p></div>
+    <div class="sec-h">06<b>Applications</b><p>Deployable units in this repo. App-scoped criteria score as passing apps / evaluated apps.</p></div>
     <div class="apps" id="apps"></div>
   </section>
 
@@ -291,19 +344,29 @@ footer a { color: var(--text-2); }
   var R = D.report, M = D.meta, S = D.score;
   var META = {}; M.criteria.forEach(function (c) { META[c.id] = c; });
   var PILLAR = {}; M.pillars.forEach(function (p) { PILLAR[p.id] = p; });
+  var LANES = M.lanes || [{ id: "auto", name: "Auto-fix" }, { id: "guided", name: "Your call" }, { id: "manual", name: "Manual" }];
+  var LANE = {}; LANES.forEach(function (l) { LANE[l.id] = l; });
+  var SHORT = { style: "Style", build: "Build", testing: "Testing", docs: "Docs", devenv: "Dev env", observability: "Observability", security: "Security", tasks: "Tasks", product: "Product" };
   var NS = "http://www.w3.org/2000/svg";
+  var RED = "#e5484d";
   var pct = function (x) { return Math.round(x * 100) + "%"; };
   var fmt = function (n) { return Math.round(n * 100) / 100; };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   var crit = function (id) { return R.criteria[id] || { status: "review", rationale: "" }; };
-  var STATUS_LABEL = { pass: "Pass", fail: "Fail", skip: "Skip", review: "Review" };
-  var STATUS_GLYPH = { pass: "✓", fail: "✕", skip: "–", review: "?" };
+  var failing = function (r) { return r.status === "fail" || r.status === "review"; };
+  var label = function (r) { return r.waived ? "Waived" : { pass: "Pass", fail: "Fail", skip: "Skip", review: "Review" }[r.status]; };
+  var GLYPH = { pass: "✓", fail: "✕", skip: "–", review: "?" };
+  var STATUS_ORDER = { fail: 0, review: 1, pass: 2, skip: 3 };
 
   function el(tag, attrs, parent) {
     var n = document.createElementNS(NS, tag);
     for (var k in attrs) n.setAttribute(k, attrs[k]);
     if (parent) parent.appendChild(n);
     return n;
+  }
+  function txt(parent, x, y, s, attrs) {
+    var t = el("text", Object.assign({ x: x, y: y, fill: "#fff", "font-family": "Inter, Helvetica Neue, Helvetica, Arial, sans-serif" }, attrs || {}), parent);
+    t.textContent = s; return t;
   }
 
   /* theme */
@@ -316,26 +379,22 @@ footer a { color: var(--text-2); }
 
   /* tooltip */
   var tip = document.getElementById("tip");
-  function showTip(html, ev) {
-    tip.innerHTML = html; tip.style.opacity = 1; moveTip(ev);
-  }
   function moveTip(ev) {
     var x = ev.clientX + 14, y = ev.clientY + 14, r = tip.getBoundingClientRect();
     if (x + r.width > window.innerWidth - 8) x = ev.clientX - r.width - 14;
     if (y + r.height > window.innerHeight - 8) y = ev.clientY - r.height - 14;
     tip.style.left = x + "px"; tip.style.top = y + "px";
   }
-  function hideTip() { tip.style.opacity = 0; }
   function bindTip(node, htmlFn) {
-    node.addEventListener("mouseenter", function (e) { showTip(htmlFn(), e); });
+    node.addEventListener("mouseenter", function (e) { tip.innerHTML = htmlFn(); tip.style.opacity = 1; moveTip(e); });
     node.addEventListener("mousemove", moveTip);
-    node.addEventListener("mouseleave", hideTip);
+    node.addEventListener("mouseleave", function () { tip.style.opacity = 0; });
   }
   function critTip(id) {
     var c = crit(id), m = META[id];
     var frac = c.denominator > 1 ? " · " + c.numerator + "/" + c.denominator + " apps" : "";
-    return "<b>" + esc(m.name) + "</b><br><span class='m'>L" + m.level + " · " + esc(PILLAR[m.pillar].name) + " · " +
-      STATUS_LABEL[c.status] + frac + "</span><br>" + esc(c.rationale || "");
+    var lane = failing(c) && m.lane ? " · " + LANE[m.lane].name : "";
+    return "<b>" + esc(m.name) + "</b><br><span class='m'>L" + m.level + " · " + esc(PILLAR[m.pillar].name) + " · " + label(c) + frac + lane + "</span><br>" + esc(c.rationale || "");
   }
 
   /* header */
@@ -357,143 +416,167 @@ footer a { color: var(--text-2); }
   var banners = [];
   if (D.provisional) banners.push("Provisional report: some criteria were still marked review and were scored as failing.");
   if (repo.has_local_changes) banners.push("Evaluated with uncommitted local changes.");
-  if (banners.length) document.getElementById("banner").innerHTML = banners.map(function (b) { return '<div class="banner">' + esc(b) + "</div>"; }).join("");
+  document.getElementById("banner").innerHTML = banners.map(function (b) { return '<div class="banner">' + esc(b) + "</div>"; }).join("");
 
-  /* panel 1: criteria grid (columns = levels) */
-  (function () {
-    var host = document.getElementById("pGrid"), W = 300, H = 400, top = 0;
-    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, preserveAspectRatio: "none" }, host);
-    var weights = [1.45, 1.15, .85, .62, .42];
-    var cols = M.levels.map(function (lv, i) {
-      var items = M.criteria.filter(function (c) { return c.level === lv.level; })
-        .sort(function (a, b) { return M.pillars.findIndex(function (p) { return p.id === a.pillar; }) - M.pillars.findIndex(function (p) { return p.id === b.pillar; }); });
-      return { lv: lv, items: items, w: items.length * weights[i] };
-    });
-    var total = cols.reduce(function (s, c) { return s + c.w; }, 0), x = 0;
-    var labelCells = [];
-    cols.forEach(function (col, ci) {
-      var w = W * col.w / total, n = col.items.length;
-      var k = Math.max(1, Math.round(Math.sqrt(n * w / H) * .8));
-      var rows = Math.ceil(n / k), ch = (H - top) / rows;
-      col.items.forEach(function (c, i) {
-        var r = Math.floor(i / k), inRow = Math.min(k, n - r * k), j = i - r * k;
-        var cw = w / inRow, cx = x + j * cw, cy = top + r * ch;
-        var res = crit(c.id), fillOp = 0;
-        if (res.status === "pass") fillOp = .2;
-        else if (res.status === "fail" && res.denominator > 1) fillOp = .2 * res.numerator / res.denominator;
-        var rect = el("rect", { x: cx, y: cy, width: cw, height: ch, fill: "#fff", "fill-opacity": fillOp,
-          stroke: "#fff", "stroke-opacity": res.status === "skip" ? .25 : .55, "stroke-width": .5,
-          "stroke-dasharray": res.status === "skip" ? "2 2" : "none", "vector-effect": "non-scaling-stroke", class: "cell" }, svg);
-        bindTip(rect, function () { return critTip(c.id); });
-        if (ci === 0 && r === Math.floor(rows / 2)) labelCells.push(cy);
-      });
-      x += w;
-    });
-    var o = S.overall;
-    host.setAttribute("aria-label", fmt(o.passed) + " of " + o.applicable + " applicable criteria passing");
-    var ly = (labelCells[0] || H / 2) + 2;
-    var t = document.createElement("div");
-    t.style.cssText = "position:absolute;left:3%;top:" + (ly / H * 100) + "%;font-weight:500;font-size:clamp(11px,1.1vw,14px);line-height:1.15;pointer-events:none;letter-spacing:-.005em;text-shadow:0 0 6px rgba(80,95,108,.6)";
-    t.innerHTML = fmt(o.passed) + " of " + o.applicable + "<br>criteria passing";
-    host.appendChild(t);
-  })();
+  var failingIds = M.criteria.filter(function (c) { return failing(crit(c.id)); }).map(function (c) { return c.id; });
+  var nextLine = S.next ? (S.next.criteria_needed ? "Pass " + S.next.criteria_needed + " more Level " + S.level + (S.next.criteria_needed === 1 ? " criterion" : " criteria") + " to reach " + S.next.name : "Level " + S.next.level + ", " + S.next.name + ", is next") : "Every level unlocked";
 
-  /* panel 2: level staircase on hairline routes */
+  /* tile 1: level staircase (slate) */
   (function () {
-    var host = document.getElementById("pInk"), W = 300, H = 400;
+    var host = document.getElementById("pLevel"), W = 300, H = 400;
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H }, host);
-    var xs = [118, 176, 74, 150, 104], ys = [92, 150, 208, 266, 324];
-    var line = function (op) { return { fill: "none", stroke: "#fff", "stroke-opacity": op, "stroke-width": .8, "vector-effect": "non-scaling-stroke" }; };
-    // decorative rounded frames, like routed traces
-    [[64, 44, 200, 300, 10, .14], [20, 124, 80, 116, 8, .1], [222, 176, 62, 170, 8, .12]].forEach(function (f) {
-      var a = line(f[5]); a.x = f[0]; a.y = f[1]; a.width = f[2]; a.height = f[3]; a.rx = f[4]; el("rect", a, svg);
-    });
-    var lvls = S.levels;
-    var widths = lvls.map(function (lv) { return lv.name.length * 8.4 + 46; });
-    for (var i = 0; i < lvls.length - 1; i++) {
-      var x1 = xs[i] - 10, y1 = ys[i] - 5, x2 = xs[i + 1] - 10, y2 = ys[i + 1] - 5, mid = Math.min(x1, x2) - 22 - (i % 2) * 14, r = 8;
-      var d = "M" + x1 + " " + y1 + " H" + (mid + r) + " Q" + mid + " " + y1 + " " + mid + " " + (y1 + r) +
-        " V" + (y2 - r) + " Q" + mid + " " + y2 + " " + (mid + r) + " " + y2 + " H" + x2;
-      var reached = lvls[i + 1].unlocked;
-      el("path", Object.assign(line(reached ? .78 : .2), { d: d }), svg);
-    }
-    // vertical drop from the right edge of each word, echoing the reference
-    lvls.forEach(function (lv, i) {
-      var xe = Math.min(W - 14, xs[i] + widths[i] - 10);
-      el("path", Object.assign(line(.18), { d: "M" + xe + " " + (ys[i] - 26) + " V" + (ys[i] - 14) + " Q" + xe + " " + (ys[i] - 8) + " " + (xe - 6) + " " + (ys[i] - 8) }), svg);
-    });
-    var txt = function (x, y, s, attrs) {
-      var t = el("text", Object.assign({ x: x, y: y, fill: "#fff", "font-size": 14, "font-weight": 500, "font-family": "var(--sans)" }, attrs || {}), svg);
-      t.textContent = s; return t;
-    };
-    txt(16, 30, "Level " + S.level);
-    lvls.forEach(function (lv, i) {
-      var cur = lv.level === S.level, op = lv.unlocked ? 1 : .36;
-      if (cur) el("rect", { x: xs[i] - 16, y: ys[i] - 10, width: 6, height: 6, fill: "#fff" }, svg);
-      var t = txt(xs[i], ys[i], lv.name, { "fill-opacity": op });
-      var p = txt(xs[i] + lv.name.length * 8.4 + 6, ys[i], pct(lv.rate), { "font-size": 9.5, "font-family": "var(--mono)", "font-weight": 400, "fill-opacity": op * .7 });
-      var hit = el("rect", { x: xs[i] - 18, y: ys[i] - 16, width: widths[i] + 10, height: 22, fill: "transparent" }, svg);
+    // the subdividing hairline grid from the reference, kept faint behind the data
+    [182, 220, 246, 264, 276, 284, 290].forEach(function (x) { el("line", { x1: x, x2: x, y1: 0, y2: H, stroke: "#fff", "stroke-opacity": .1, "stroke-width": .6 }, svg); });
+    [36, 118, 190, 246, 290, 326, 356, 380].forEach(function (y, i) { el("line", { x1: 182 + (i % 3) * 38, x2: W, y1: y, y2: y, stroke: "#fff", "stroke-opacity": .1, "stroke-width": .6 }, svg); });
+    txt(svg, 18, 30, "AGENT READINESS", { "font-size": 8.5, "letter-spacing": 1.4, "fill-opacity": .8 });
+    txt(svg, 16, 72, "Level " + S.level, { "font-size": 36, "font-weight": 500, "letter-spacing": -1 });
+    txt(svg, 18, 96, S.level_name, { "font-size": 17, "fill-opacity": .9 });
+    var w = 156, step = 26, rise = 50, baseY = 350;
+    S.levels.forEach(function (lv, i) {
+      var x0 = 16 + i * step, y = baseY - i * rise, cleared = lv.level < S.level, current = lv.level === S.level;
+      var op = lv.unlocked ? 1 : .5;
+      if (i < S.levels.length - 1) {
+        var nx = 16 + (i + 1) * step, ny = y - rise;
+        el("path", { d: "M" + x0 + " " + (y - 1) + " V" + (ny + 8) + " Q" + x0 + " " + ny + " " + (x0 + 8) + " " + ny + " H" + nx,
+          fill: "none", stroke: "#fff", "stroke-opacity": S.levels[i + 1].unlocked ? .85 : .3, "stroke-width": 1 }, svg);
+      }
+      el("line", { x1: x0, x2: x0 + w, y1: y, y2: y, stroke: "#fff", "stroke-opacity": .38, "stroke-width": 1 }, svg);
+      if (lv.rate > 0) el("line", { x1: x0, x2: x0 + Math.max(2, w * lv.rate), y1: y, y2: y, stroke: "#fff", "stroke-opacity": op, "stroke-width": 3.5, "stroke-linecap": "round" }, svg);
+      el("line", { x1: x0 + w * S.threshold, x2: x0 + w * S.threshold, y1: y - 6, y2: y + 6, stroke: "#fff", "stroke-opacity": .9, "stroke-width": 1 }, svg);
+      if (current) el("rect", { x: x0 - 1, y: y - 22, width: 6, height: 6, fill: "#fff" }, svg);
+      txt(svg, x0 + (current ? 10 : 0), y - 10, "L" + lv.level + "  " + lv.name, { "font-size": 12, "font-weight": current ? 600 : 500, "fill-opacity": op });
+      txt(svg, x0 + w, y - 10, pct(lv.rate), { "font-size": 10.5, "text-anchor": "end", "font-family": "JetBrains Mono, ui-monospace, Consolas, monospace", "fill-opacity": op * .95 });
+      if (current) txt(svg, x0, y + 16, "YOU ARE HERE", { "font-size": 7.5, "letter-spacing": 1.2, "fill-opacity": .9 });
+      var hit = el("rect", { x: x0 - 4, y: y - 26, width: w + 8, height: 34, fill: "transparent", class: "hit" }, svg);
       bindTip(hit, function () {
         return "<b>Level " + lv.level + ": " + esc(lv.name) + "</b><br><span class='m'>" + fmt(lv.passed) + "/" + lv.applicable + " passing · " + pct(lv.rate) +
-          (lv.level < S.level ? " · cleared" : lv.level === S.level ? " · current" : " · locked") + "</span><br>" + esc(lv.summary);
+          (cleared ? " · cleared" : current ? " · current" : " · locked") + "</span><br>" + esc(lv.summary);
       });
     });
-    txt(16, 384, S.next ? "Next: " + S.next.name : "Fully autonomous", { "fill-opacity": .9 });
-    host.setAttribute("aria-label", "Level " + S.level + " of 5, " + S.level_name);
+    txt(svg, 16, 390, nextLine, { "font-size": 10.5, "fill-opacity": .95 });
+    host.setAttribute("aria-label", "Level " + S.level + " of 5, " + S.level_name + ". " + nextLine + ".");
   })();
 
-  /* panel 3: lede + concentric broken arcs (one ring per pillar) */
+  /* tile 2: gap map, pillars x levels (ink) */
   (function () {
-    var host = document.getElementById("pSand"), W = 300, H = 400;
-    var o = S.overall, n = S.next;
-    var lede = esc(repo.name || "This repository") + " is at Level " + S.level + ", " + esc(S.level_name) + ". " +
-      fmt(o.passed) + " of " + o.applicable + " applicable criteria pass (" + pct(o.rate) + ")" +
-      (n ? (n.criteria_needed ? ", and " + n.criteria_needed + " more at Level " + S.level + " would unlock " + esc(n.name) + "." : ". " + esc(n.name) + " is next.") : ".");
-    document.getElementById("lede").innerHTML = lede;
+    var host = document.getElementById("pGaps"), W = 300, H = 400;
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H }, host);
-    host.insertBefore(svg, host.firstChild);
-    var cx = 200, cy = 286, r0 = 24, step = 15;
-    var polar = function (r, a) { var t = (a - 90) * Math.PI / 180; return [cx + r * Math.cos(t), cy + r * Math.sin(t)]; };
-    M.pillars.forEach(function (p, pi) {
-      var items = M.criteria.filter(function (c) { return c.pillar === p.id; });
-      var r = r0 + pi * step, n = items.length, span = 360 / n, gap = Math.min(10, span * .28), rot = pi * 37;
-      items.forEach(function (c, i) {
-        var res = crit(c.id);
-        if (res.status === "skip") return;
-        var a1 = rot + i * span + gap / 2, a2 = rot + (i + 1) * span - gap / 2;
-        var s = polar(r, a1), e = polar(r, a2), large = a2 - a1 > 180 ? 1 : 0;
-        var frac = res.denominator ? res.numerator / res.denominator : 0;
-        var op = res.status === "pass" ? .9 : res.denominator > 1 && frac > 0 ? .25 + .5 * frac : .2;
-        var arc = el("path", { d: "M" + s[0] + " " + s[1] + " A" + r + " " + r + " 0 " + large + " 1 " + e[0] + " " + e[1],
-          fill: "none", stroke: "#1b1d1e", "stroke-opacity": op, "stroke-width": 1.2, "stroke-linecap": "butt", class: "arc" }, svg);
-        bindTip(arc, function () { return critTip(c.id); });
-      });
+    var nPass = 0, nFail = 0, nSkip = 0;
+    M.criteria.forEach(function (c) { var r = crit(c.id); if (failing(r)) nFail++; else if (r.status === "pass") nPass++; else nSkip++; });
+    txt(svg, 16, 28, nFail + " failing", { "font-size": 22, "font-weight": 500, "letter-spacing": -.6 });
+    txt(svg, 16, 46, nPass + " passing · " + nSkip + " skipped or waived", { "font-size": 10, "fill-opacity": .6 });
+    var gx = 82, gy = 72, cw = 39.6, rh = 32, size = 7, gap = 3, pad = 4;
+    M.levels.forEach(function (lv, j) {
+      txt(svg, gx + j * cw + cw / 2, gy - 7, "L" + lv.level, { "font-size": 9, "text-anchor": "middle", "fill-opacity": lv.level <= S.level ? .9 : .45, "font-family": "JetBrains Mono, ui-monospace, Consolas, monospace" });
     });
+    M.pillars.forEach(function (p, i) {
+      var y = gy + i * rh;
+      var rowFails = 0;
+      txt(svg, 16, y + rh / 2 + 3.5, SHORT[p.id] || p.name, { "font-size": 10, "fill-opacity": .78 });
+      M.levels.forEach(function (lv, j) {
+        var x = gx + j * cw;
+        el("rect", { x: x, y: y, width: cw, height: rh, fill: "none", stroke: "#fff", "stroke-opacity": .13, "stroke-width": .6 }, svg);
+        var items = M.criteria.filter(function (c) { return c.pillar === p.id && c.level === lv.level; })
+          .sort(function (a, b) { return STATUS_ORDER[crit(a.id).status] - STATUS_ORDER[crit(b.id).status]; });
+        items.forEach(function (c, k) {
+          var r = crit(c.id), sx = x + pad + (k % 3) * (size + gap), sy = y + pad + Math.floor(k / 3) * (size + gap), node;
+          if (failing(r)) {
+            rowFails++;
+            var frac = r.denominator > 1 ? r.numerator / r.denominator : 0;
+            node = el("rect", { x: sx, y: sy, width: size, height: size, rx: 1, fill: RED, class: "sq" }, svg);
+            if (frac > 0) el("rect", { x: sx, y: sy, width: size * frac, height: size, rx: 1, fill: "#fff", "pointer-events": "none" }, svg);
+          } else if (r.status === "pass") {
+            node = el("rect", { x: sx, y: sy, width: size, height: size, rx: 1, fill: "#fff", "fill-opacity": .88, class: "sq" }, svg);
+          } else {
+            node = el("rect", { x: sx, y: sy, width: size, height: size, fill: "transparent", class: "sq" }, svg);
+            el("circle", { cx: sx + size / 2, cy: sy + size / 2, r: 1.1, fill: "#fff", "fill-opacity": .45, "pointer-events": "none" }, svg);
+          }
+          bindTip(node, function () { return critTip(c.id); });
+        });
+      });
+      if (rowFails) txt(svg, W - 7, y + rh / 2 + 3.5, String(rowFails), { "font-size": 9.5, "text-anchor": "end", fill: RED, "font-family": "JetBrains Mono, ui-monospace, Consolas, monospace" });
+    });
+    var ly = 380;
+    el("rect", { x: 16, y: ly - 7, width: 7, height: 7, rx: 1, fill: "#fff", "fill-opacity": .88 }, svg); txt(svg, 27, ly, "pass", { "font-size": 9.5, "fill-opacity": .75 });
+    el("rect", { x: 62, y: ly - 7, width: 7, height: 7, rx: 1, fill: RED }, svg); txt(svg, 73, ly, "fail", { "font-size": 9.5, "fill-opacity": .75 });
+    el("circle", { cx: 107.5, cy: ly - 3.5, r: 1.1, fill: "#fff", "fill-opacity": .5 }, svg); txt(svg, 113, ly, "skipped", { "font-size": 9.5, "fill-opacity": .75 });
+    host.setAttribute("aria-label", nFail + " failing criteria, " + nPass + " passing, mapped by pillar and level");
+  })();
+
+  /* tile 3: where to start (sand) */
+  (function () {
+    var o = S.overall;
+    document.getElementById("lede").innerHTML = esc(repo.name || "This repo") + " passes " + pct(o.rate) + " of what agents need. " + esc(nextLine) + ".";
+    var ring = document.getElementById("ring"), cx = 60, cy = 60;
+    var polar = function (r, a) { var t = (a - 90) * Math.PI / 180; return [cx + r * Math.cos(t), cy + r * Math.sin(t)]; };
+    function arcRing(ids, r, width) {
+      var n = ids.length; if (!n) return;
+      var span = 360 / n, gapDeg = Math.min(4, span * .3);
+      ids.forEach(function (id, i) {
+        var res = crit(id), a1 = i * span + gapDeg / 2, a2 = (i + 1) * span - gapDeg / 2;
+        var s = polar(r, a1), e = polar(r, a2);
+        var p = el("path", { d: "M" + s[0] + " " + s[1] + " A" + r + " " + r + " 0 " + (a2 - a1 > 180 ? 1 : 0) + " 1 " + e[0] + " " + e[1],
+          fill: "none", stroke: failing(res) ? "#a3342f" : "#1b1d1e", "stroke-opacity": failing(res) ? .9 : .82, "stroke-width": width, class: "hit" }, ring);
+        bindTip(p, function () { return critTip(id); });
+      });
+    }
+    var applicable = M.criteria.filter(function (c) { return crit(c.id).status !== "skip"; }).map(function (c) { return c.id; })
+      .sort(function (a, b) { return (failing(crit(a)) ? 1 : 0) - (failing(crit(b)) ? 1 : 0); });
+    var cur = M.criteria.filter(function (c) { return c.level === S.level && crit(c.id).status !== "skip"; }).map(function (c) { return c.id; })
+      .sort(function (a, b) { return (failing(crit(a)) ? 1 : 0) - (failing(crit(b)) ? 1 : 0); });
+    arcRing(applicable, 54, 3);
+    arcRing(cur, 42, 5);
+    var t = el("text", { x: cx, y: cy + 2, "text-anchor": "middle", fill: "#1b1d1e", "font-size": 20, "font-weight": 500, "font-family": "Inter, Helvetica, Arial, sans-serif" }, ring); t.textContent = pct(o.rate);
+    var t2 = el("text", { x: cx, y: cy + 15, "text-anchor": "middle", fill: "#1b1d1e", "fill-opacity": .7, "font-size": 7.5, "font-family": "Inter, Helvetica, Arial, sans-serif" }, ring); t2.textContent = "outer: all · inner: L" + S.level;
+    ring.setAttribute("aria-label", pct(o.rate) + " of applicable criteria pass; red arcs are failing criteria");
+    document.getElementById("moves").innerHTML = (D.actions || []).slice(0, 3).map(function (a, i) {
+      var lane = a.lane && LANE[a.lane] ? '<span class="lane">' + esc(LANE[a.lane].name) + "</span>" : "";
+      return '<li><span class="n">0' + (i + 1) + "</span><div><b>" + esc(a.title) + "</b>" + lane + "</div><p>" + esc(a.how || "") + "</p></li>";
+    }).join("") || '<li><span class="n">—</span><div><b>Nothing failing</b></div><p>Every applicable criterion passes.</p></li>';
+    var lc = S.lanes || {};
+    document.getElementById("laneCounts").innerHTML = LANES.map(function (l) {
+      return "<div><b>" + (lc[l.id] || 0) + "</b>" + esc(l.name) + "</div>";
+    }).join("");
   })();
 
   /* 01 levels */
   document.getElementById("levels").innerHTML = S.levels.map(function (lv) {
     var cls = lv.level < S.level ? "done" : lv.level === S.level ? "current" : "locked";
-    var state = lv.level < S.level ? "Cleared" : lv.level === S.level ? (lv.level === 5 ? "Current" : "Current · " + pct(S.threshold) + " unlocks " + S.levels[lv.level].name) : "Locked";
+    var state = lv.level < S.level ? "Cleared" : lv.level === S.level ? (lv.level === 5 ? "Current" : "Current · 80% unlocks " + S.levels[lv.level].name) : "Locked";
+    var nf = M.criteria.filter(function (c) { return c.level === lv.level && failing(crit(c.id)); }).length;
     return '<div class="lv ' + cls + '"><div class="n"><span>L' + lv.level + "</span><span>" + fmt(lv.passed) + "/" + lv.applicable + '</span></div><div class="name">' + esc(lv.name) +
-      '</div><div class="v">' + Math.round(lv.rate * 100) + '<small>%</small></div><div class="track"><div class="fill" style="width:' + (lv.rate * 100) + '%"></div><div class="tick" style="left:' + (S.threshold * 100) + '%" title="80% gate"></div></div><div class="state">' + state + "</div></div>";
+      '</div><div class="v">' + Math.round(lv.rate * 100) + '<small>%</small></div><div class="track"><div class="fill" style="width:' + (lv.rate * 100) + '%"></div><div class="tick" style="left:' + (S.threshold * 100) + '%" title="80% gate"></div></div><div class="state">' + state + "</div>" +
+      (nf ? '<div class="fails">' + nf + " failing</div>" : "") + "</div>";
   }).join("");
 
-  /* 02 pillars */
+  /* 02 pillars: stacked pass / fail */
   var pillarsEl = document.getElementById("pillars");
   S.pillars.forEach(function (p) {
+    var nf = M.criteria.filter(function (c) { return c.pillar === p.id && failing(crit(c.id)); }).length;
+    var pass = p.applicable ? p.passed / p.applicable : 0, fail = p.applicable ? (p.applicable - p.passed) / p.applicable : 0;
     var row = document.createElement("div");
     row.className = "pr";
-    row.innerHTML = '<div class="label">' + esc(p.name) + '</div><div class="track"><div class="fill" style="width:' + (p.rate * 100) + '%"></div></div><div class="val">' + fmt(p.passed) + "/" + p.applicable + " · " + pct(p.rate) + "</div>";
+    row.innerHTML = '<div class="label">' + esc(p.name) + '</div><div class="stack">' +
+      (pass > 0 ? '<span class="p" style="width:' + (pass * 100) + '%"></span>' : "") +
+      (fail > 0 ? '<span class="f" style="width:' + (fail * 100) + '%"></span>' : "") +
+      '</div><div class="val">' + fmt(p.passed) + " pass · " + nf + " fail <em>" + pct(p.rate) + "</em></div>";
     bindTip(row, function () { return "<b>" + esc(p.name) + "</b><br><span class='m'>" + fmt(p.passed) + "/" + p.applicable + " passing · " + (p.total - p.applicable) + " skipped</span><br>" + esc(p.why); });
     pillarsEl.appendChild(row);
   });
 
-  /* 03 actions */
-  document.getElementById("actions").innerHTML = (D.actions || []).length ? D.actions.map(function (a, i) {
-    return '<div class="act"><div class="i">0' + (i + 1) + "</div><h3>" + esc(a.title) + "</h3><code>" + esc(a.criterion || "") + "</code><p>" + esc(a.how || "") + "</p>" +
+  /* 03 fix plan */
+  document.getElementById("laneGrid").innerHTML = LANES.map(function (l) {
+    var ids = failingIds.filter(function (id) { return (META[id].lane || "guided") === l.id; })
+      .sort(function (a, b) { return META[a].level - META[b].level; });
+    var shown = ids.slice(0, 8);
+    return '<div class="lane-col"><div class="k"><b>' + ids.length + "</b><span>" + esc(l.name) + "</span></div><p>" + esc(l.summary || "") + "</p><ul>" +
+      shown.map(function (id) { return "<li><span>" + esc(META[id].name) + '</span><span class="mono">L' + META[id].level + "</span></li>"; }).join("") +
+      "</ul>" + (ids.length > shown.length ? '<div class="more">+' + (ids.length - shown.length) + " more in the criteria list</div>" : "") + "</div>";
+  }).join("");
+  document.getElementById("actions").innerHTML = (D.actions || []).map(function (a, i) {
+    return '<div class="act"><div class="i"><span>Start here · 0' + (i + 1) + "</span>" + (a.lane && LANE[a.lane] ? '<span class="chip">' + esc(LANE[a.lane].name) + "</span>" : "") + "</div><h3>" + esc(a.title) + "</h3><p>" + esc(a.how || "") + "</p>" +
       (a.why ? '<p class="now">Now: ' + esc(a.why) + "</p>" : "") + "</div>";
-  }).join("") : '<div class="act"><h3>Nothing failing</h3><p>Every applicable criterion passes.</p></div>';
+  }).join("");
 
   /* 04 trend */
   (function () {
@@ -504,7 +587,7 @@ footer a { color: var(--text-2); }
     }
     var W = 720, Ht = 180, pl = 36, pr = 16, pt = 16, pb = 26;
     var svg = el("svg", { viewBox: "0 0 " + W + " " + Ht, role: "img", "aria-label": "Pass rate over " + H.length + " runs" }, host);
-    var X = function (i) { return pl + (W - pl - pr) * (H.length === 1 ? .5 : i / (H.length - 1)); };
+    var X = function (i) { return pl + (W - pl - pr) * (i / (H.length - 1)); };
     var Y = function (v) { return pt + (Ht - pt - pb) * (1 - v); };
     [0, .5, 1].forEach(function (v) {
       el("line", { x1: pl, x2: W - pr, y1: Y(v), y2: Y(v), stroke: "var(--rule)", "stroke-width": 1 }, svg);
@@ -512,14 +595,13 @@ footer a { color: var(--text-2); }
     });
     el("path", { d: H.map(function (h, i) { return (i ? "L" : "M") + X(i) + " " + Y(h.rate); }).join(" "), fill: "none", stroke: "var(--bar)", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
     H.forEach(function (h, i) {
-      var changed = i === 0 || h.level !== H[i - 1].level;
       el("circle", { cx: X(i), cy: Y(h.rate), r: 4, fill: "var(--bar)", stroke: "var(--bg)", "stroke-width": 2 }, svg);
-      if (changed || i === H.length - 1) {
+      if (i === 0 || h.level !== H[i - 1].level || i === H.length - 1) {
         var t = el("text", { x: X(i), y: Y(h.rate) - 10, "text-anchor": i === H.length - 1 ? "end" : "middle", "font-size": 11, fill: "var(--text-2)" }, svg);
         t.textContent = "L" + h.level + (i === H.length - 1 ? " · " + pct(h.rate) : "");
       }
-      var d = h.generated_at ? new Date(h.generated_at) : null;
       if (i === 0 || i === H.length - 1) {
+        var d = h.generated_at ? new Date(h.generated_at) : null;
         var dt = el("text", { x: X(i), y: Ht - 6, "text-anchor": i === 0 ? "start" : "end", "font-size": 10, fill: "var(--muted)" }, svg);
         dt.textContent = d && !isNaN(d) ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
       }
@@ -531,19 +613,18 @@ footer a { color: var(--text-2); }
       var i = Math.max(0, Math.min(H.length - 1, Math.round((vx - pl) / ((W - pl - pr) / (H.length - 1)))));
       var h = H[i], d = h.generated_at ? new Date(h.generated_at) : null;
       cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("opacity", 1);
-      showTip("<b>Level " + h.level + " · " + pct(h.rate) + "</b><br><span class='m'>" + (d && !isNaN(d) ? d.toLocaleString() : "") + (h.commit ? " · " + esc(h.commit.slice(0, 8)) : "") + "</span>", e);
+      tip.innerHTML = "<b>Level " + h.level + " · " + pct(h.rate) + "</b><br><span class='m'>" + (d && !isNaN(d) ? d.toLocaleString() : "") + (h.commit ? " · " + esc(h.commit.slice(0, 8)) : "") + "</span>";
+      tip.style.opacity = 1; moveTip(e);
     });
-    hit.addEventListener("mouseleave", function () { cross.setAttribute("opacity", 0); hideTip(); });
+    hit.addEventListener("mouseleave", function () { cross.setAttribute("opacity", 0); tip.style.opacity = 0; });
   })();
 
   /* 05 criteria explorer */
-  var state = { status: "all", pillar: "all", q: "" };
-  var counts = { all: 0, fail: 0, pass: 0, skip: 0, review: 0 };
-  M.criteria.forEach(function (c) { counts.all++; counts[crit(c.id).status]++; });
-  var segs = [["all", "All"], ["fail", "Failing"], ["pass", "Passing"], ["skip", "Skipped"]];
-  if (counts.review) segs.splice(2, 0, ["review", "Review"]);
+  var state = { status: "all", pillar: "all", lane: "all", q: "" };
+  var counts = { all: 0, fail: 0, pass: 0, skip: 0 };
+  M.criteria.forEach(function (c) { var r = crit(c.id); counts.all++; counts[failing(r) ? "fail" : r.status]++; });
   var segEl = document.getElementById("segStatus");
-  segs.forEach(function (s) {
+  [["all", "All"], ["fail", "Failing"], ["pass", "Passing"], ["skip", "Skipped"]].forEach(function (s) {
     var b = document.createElement("button");
     b.type = "button"; b.textContent = s[1] + " " + counts[s[0]]; b.setAttribute("aria-pressed", s[0] === state.status);
     b.addEventListener("click", function () { state.status = s[0]; segEl.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", x === b); }); draw(); });
@@ -552,37 +633,43 @@ footer a { color: var(--text-2); }
   var fP = document.getElementById("fPillar");
   fP.innerHTML = '<option value="all">All pillars</option>' + M.pillars.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + "</option>"; }).join("");
   fP.addEventListener("change", function () { state.pillar = fP.value; draw(); });
+  var fL = document.getElementById("fLane");
+  fL.innerHTML = '<option value="all">All fix lanes</option>' + LANES.map(function (l) { return '<option value="' + l.id + '">' + esc(l.name) + "</option>"; }).join("");
+  fL.addEventListener("change", function () { state.lane = fL.value; draw(); });
   document.getElementById("fSearch").addEventListener("input", function (e) { state.q = e.target.value.toLowerCase(); draw(); });
-  var openGroups = {}; openGroups[S.level] = true;
+  var openGroups = {}; openGroups[S.level] = true; if (S.level < 5) openGroups[S.level + 1] = true;
 
   function row(c) {
-    var r = crit(c.id), apps = r.apps || {};
+    var r = crit(c.id), apps = r.apps || {}, isFail = failing(r);
     var score = r.status === "skip" ? "–" : r.denominator > 1 ? r.numerator + "/" + r.denominator : (r.status === "pass" ? "1/1" : "0/1");
     var appRows = Object.keys(apps).length > 1 ? "<dt>Apps</dt><dd><ul>" + Object.keys(apps).map(function (k) {
-      var a = apps[k]; return '<li><span class="st ' + a.status + '"><i>' + STATUS_GLYPH[a.status] + '</i></span> <span class="mono">' + esc(k) + "</span> " + esc(a.rationale || "") + "</li>";
+      var a = apps[k]; return '<li><span class="st ' + a.status + '"><i>' + GLYPH[a.status] + '</i></span> <span class="mono">' + esc(k) + "</span> " + esc(a.rationale || "") + "</li>";
     }).join("") + "</ul></dd>" : "";
-    var prev = r.previous && r.previous.status && r.previous.status !== r.status ? "<dt>Changed</dt><dd>Was " + STATUS_LABEL[r.previous.status] + " last run</dd>" : "";
-    return '<div class="crit" tabindex="0"><span class="st ' + r.status + '"><i>' + STATUS_GLYPH[r.status] + "</i>" + STATUS_LABEL[r.status] + '</span><div><span class="nm">' + esc(c.name) + '</span><span class="id">' + c.id +
-      '</span><div class="ra">' + esc(r.rationale || "") + '</div></div><span class="pl">' + esc(PILLAR[c.pillar].name) + '</span><span class="sc">' + score + '</span><div class="more"><dl>' + appRows + prev +
-      "<dt>Passes if</dt><dd>" + esc(c.pass) + "</dd>" + (r.status === "fail" || r.status === "review" ? "<dt>Fix</dt><dd>" + esc(c.fix) + "</dd>" : "") +
-      "<dt>Scope</dt><dd>" + (c.scope === "app" ? "Per application" : "Repository") + " · " + c.difficulty + "</dd></dl></div></div>";
+    var prev = r.previous && r.previous.status && r.previous.status !== r.status ? "<dt>Changed</dt><dd>Was " + label({ status: r.previous.status }) + " last run</dd>" : "";
+    var fx = isFail ? '<div class="fx"><span class="chip">' + esc((LANE[c.lane] || LANE.guided).name) + "</span><span><b>Fix:</b> " + esc(c.fix) + "</span></div>" : "";
+    return '<div class="crit ' + r.status + '" tabindex="0"><span class="st ' + r.status + '"><i>' + GLYPH[r.status] + "</i>" + label(r) + '</span><div><span class="nm">' + esc(c.name) + '</span><span class="id">' + c.id +
+      '</span><div class="ra">' + esc(r.rationale || "") + "</div>" + fx + '</div><span class="pl">' + esc(PILLAR[c.pillar].name) + '</span><span class="sc">' + score + '</span><div class="more"><dl>' + appRows + prev +
+      "<dt>Passes if</dt><dd>" + esc(c.pass) + "</dd><dt>Scope</dt><dd>" + (c.scope === "app" ? "Per application" : "Repository") + " · " + c.difficulty + "</dd></dl></div></div>";
   }
   function draw() {
     var host = document.getElementById("criteria"), shown = 0, html = "";
     M.levels.forEach(function (lv) {
       var items = M.criteria.filter(function (c) {
         if (c.level !== lv.level) return false;
-        var r = crit(c.id);
-        if (state.status !== "all" && r.status !== state.status) return false;
+        var r = crit(c.id), st = failing(r) ? "fail" : r.status;
+        if (state.status !== "all" && st !== state.status) return false;
         if (state.pillar !== "all" && c.pillar !== state.pillar) return false;
+        if (state.lane !== "all" && (c.lane !== state.lane || !failing(r))) return false;
         if (state.q && (c.name + " " + c.id + " " + (r.rationale || "")).toLowerCase().indexOf(state.q) < 0) return false;
         return true;
-      });
+      }).sort(function (a, b) { return STATUS_ORDER[crit(a.id).status] - STATUS_ORDER[crit(b.id).status]; });
       if (!items.length) return;
       shown += items.length;
       var L = S.levels[lv.level - 1];
-      var open = state.q || state.status !== "all" || state.pillar !== "all" || openGroups[lv.level];
-      html += '<details class="grp" data-l="' + lv.level + '"' + (open ? " open" : "") + '><summary><span class="lvn">L' + lv.level + '</span><span class="t">' + esc(lv.name) + '</span><span class="s">' + items.length + " shown · " + pct(L.rate) + " passing</span></summary>" + items.map(row).join("") + "</details>";
+      var nf = items.filter(function (c) { return failing(crit(c.id)); }).length;
+      var filtered = state.q || state.status !== "all" || state.pillar !== "all" || state.lane !== "all";
+      html += '<details class="grp" data-l="' + lv.level + '"' + (filtered || openGroups[lv.level] ? " open" : "") + '><summary><span class="lvn">L' + lv.level + '</span><span class="t">' + esc(lv.name) + "</span>" +
+        (nf ? '<span class="f">' + nf + " failing</span>" : "") + '<span class="s">' + items.length + " shown · " + pct(L.rate) + " passing</span></summary>" + items.map(row).join("") + "</details>";
     });
     host.innerHTML = html || '<div class="empty">No criteria match these filters.</div>';
     document.getElementById("count").textContent = shown + " of " + M.criteria.length;
@@ -608,7 +695,7 @@ footer a { color: var(--text-2); }
   /* footer */
   document.getElementById("foot").innerHTML =
     "<p>" + M.criteria.length + " criteria across " + M.pillars.length + " pillars and 5 levels. A deterministic scan gathers evidence (files, configs, git history, the hosting platform's CLI), then the evaluating agent confirms or overrides each verdict and writes a one-line rationale. Scores are computed by script, not by the model, so they're repeatable.</p>" +
-    "<p>The level model and pillars follow Factory's Agent Readiness Model. This open, harness-agnostic implementation is an independent project, not affiliated with Factory.</p>" +
+    "<p>The level model and pillars follow Factory's Agent Readiness Model; newer criteria draw on 2025–26 guidance from Anthropic, OpenAI, GitHub, Cursor and independent research. This open, harness-agnostic implementation is not affiliated with Factory.</p>" +
     '<p class="mono">skill ' + esc((R.evaluator || {}).skill_version || "") + " · rendered " + esc(D.rendered_at || "") + "</p>";
 })();
 </script>

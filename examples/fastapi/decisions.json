@@ -1,60 +1,224 @@
 {
-  "evaluator": { "harness": "claude-code", "model": "claude-opus-5-5" },
+  "evaluator": {
+    "harness": "claude-code",
+    "model": "claude-opus-5-5"
+  },
   "criteria": {
-    "naming_consistency": { "apps": { ".": { "status": "fail", "rationale": "Ruff selects E,W,F,I,B,C4,UP only (no pep8-naming N rules) and the in-repo contributing.md is a 7-line stub linking to tiangolo.com; no committed naming rules" } } },
-    "cyclomatic_complexity": { "apps": { ".": { "status": "fail", "rationale": "Scanner matched C901 in pyproject.toml, but it is in [tool.ruff.lint] ignore (\"C901, too complex\"); no other complexity limit" } } },
-    "code_modularization": { "apps": { ".": { "status": "fail", "rationale": "No import-linter or other boundary tooling; underscore-private modules (fastapi/_compat) are convention only" } } },
-    "n_plus_one_detection": { "apps": { ".": { "status": "skip", "rationale": "Library: fastapi/ has no database access; SQLModel/SQLite appear only in docs_src tutorials and their tests" } } },
-    "build_cmd_doc": { "apps": { ".": { "status": "pass", "rationale": "README only covers end-user install (uv add fastapi), but dev commands are exposed as scripts/test.sh, scripts/lint.sh, scripts/format.sh with uv.lock + dependency-groups; contributor guide itself lives off-repo" } } },
-    "unit_tests_runnable": { "apps": { ".": { "status": "pass", "rationale": "scripts/test.sh runs `pytest -n auto --dist loadgroup tests scripts/tests/` with PYTHONPATH set, no credentials needed (it is not documented in README as the scanner claimed)" } } },
-    "single_command_setup": { "status": "fail", "rationale": "No setup script/Makefile target and no committed doc giving a bootstrap command; docs/en/docs/contributing.md defers to an external tiangolo.com page" },
-    "agentic_development": { "status": "pass", "rationale": "Scanner's evidence (fastapi/.agents) is a shipped user skill, but scripts/translate.py runs a pydantic-ai Agent on a schedule (translate.yml) that opens PRs via pr-submit[bot], e.g. #16497-#16501" },
-    "automated_pr_review": { "status": "pass", "rationale": "Scanner matched 'danger' in zizmor 'dangerous-triggers' comments (false evidence), but policy bots do comment on PRs: guard-dependencies.yml comments and closes, detect-conflicts.yml comments, latest-changes/label is a required check" },
-    "release_notes_automation": { "status": "pass", "rationale": "latest-changes[bot] writes PR titles into docs/en/docs/release-notes.md on merge (81 of the last 400 commits, .github/latest-changes.yml) and create-draft-release.yml builds notes via scripts/prepare_release.py" },
-    "feature_flag_infrastructure": { "apps": { ".": { "status": "skip", "rationale": "Library published to PyPI; no deployed app" } } },
-    "progressive_rollout": { "status": "skip", "rationale": "Library released to PyPI; no deploy target to roll out" },
-    "rollback_automation": { "status": "skip", "rationale": "Library; scanner's evidence was the word 'rollback' in DB-dependency tutorials, not a deploy rollback" },
-    "dead_feature_flag_detection": { "status": "skip", "rationale": "No feature flag system (library)" },
-    "integration_tests_exist": { "apps": { ".": { "status": "pass", "rationale": "tests/test_tutorial/* drive full docs_src apps through TestClient incl. SQLModel+SQLite, GraphQL (strawberry) and WSGI mounting; tests/test_telemetry/test_integrations.py exercises OTel export" } } },
-    "skills": { "status": "fail", "rationale": "Only fastapi/.agents/skills/fastapi/SKILL.md, a package-data skill for end users writing FastAPI apps, not at a harness-discovered root path and not about working in this repo" },
-    "api_schema_docs": { "apps": { ".": { "status": "skip", "rationale": "Library with no network API of its own; scanner matched the dependency name 'fastapi'" } } },
-    "service_flow_documented": { "status": "pass", "rationale": "English docs include mermaid sequence diagrams of request/dependency flows (docs/en/docs/tutorial/dependencies/dependencies-with-yield.md, advanced/behind-a-proxy.md); no internal ARCHITECTURE.md" },
-    "env_template": { "apps": { ".": { "status": "pass", "rationale": "Env vars the code reads (FASTAPI_OTEL_AUTO_CONFIGURE, OTEL_EXPORTER_OTLP_*, FASTAPI_ENV) are documented in docs/en/docs/advanced/opentelemetry.md and fastapi-cli.md; none are required for development" } } },
-    "local_services_setup": { "status": "skip", "rationale": "No backing services; tests use in-memory SQLite (sqlite://)" },
-    "database_schema": { "apps": { ".": { "status": "skip", "rationale": "Library has no database" } } },
-    "structured_logging": { "apps": { ".": { "status": "skip", "rationale": "Library, not a deployed service" } } },
-    "distributed_tracing": { "apps": { ".": { "status": "skip", "rationale": "Library (criterion skips libraries); FastAPI provides OTel tracing to users but no service of its own emits traces" } } },
-    "metrics_collection": { "apps": { ".": { "status": "skip", "rationale": "Library, not a deployed service" } } },
-    "error_tracking_contextualized": { "apps": { ".": { "status": "skip", "rationale": "Library; sentry-sdk is only a test dependency for integration tests" } } },
-    "health_checks": { "apps": { ".": { "status": "skip", "rationale": "Library, no running service" } } },
-    "alerting_configured": { "status": "skip", "rationale": "Library, nothing in production to alert on" },
-    "deployment_observability": { "status": "skip", "rationale": "Library, no deploys to monitor" },
-    "profiling_instrumentation": { "apps": { ".": { "status": "pass", "rationale": "CodSpeed benchmark harnesses in tests/benchmarks and tests/memory_benchmarks, run by the benchmark job in test.yml" } } },
-    "runbooks_documented": { "status": "skip", "rationale": "Library, no operations" },
-    "code_quality_metrics": { "status": "pass", "rationale": "smokeshow.yml publishes the combined coverage HTML report and a coverage status (threshold 100) for every PR/commit; CodSpeed tracks performance over time" },
-    "circuit_breakers": { "apps": { ".": { "status": "skip", "rationale": "Library with no external service calls of its own" } } },
-    "secret_scanning": { "status": "fail", "rationale": "No gitleaks/trufflehog/detect-secrets in .pre-commit-config.yaml or workflows; platform setting not visible (security_and_analysis null, secret-scanning API 404) (unverified)" },
-    "log_scrubbing": { "apps": { ".": { "status": "pass", "rationale": "Library emits request data into telemetry and redacts sensitive query params (_SENSITIVE_QUERY_PARAMETERS -> REDACTED in fastapi/telemetry/_asgi.py)" } } },
-    "pii_handling": { "apps": { ".": { "status": "skip", "rationale": "Library stores no personal data" } } },
-    "automated_security_review": { "status": "fail", "rationale": "Only zizmor runs on PRs and it scans .github/workflows YAML only; PR check runs show no CodeQL/Semgrep/Bandit for the fastapi/ Python source" },
-    "dast_scanning": { "apps": { ".": { "status": "skip", "rationale": "Framework library, not a running web app" } } },
-    "privacy_compliance": { "status": "skip", "rationale": "Library collects no personal data" },
-    "backlog_health": { "status": "pass", "rationale": "Tracker kept clear: the only open issue is the pinned #10370 Roadmap (5.2k-char body; scanner's title-length heuristic missed it); recent issues are triaged and closed, requests go to Discussions" },
-    "product_analytics_instrumentation": { "apps": { ".": { "status": "skip", "rationale": "Library, not a user-facing app" } } },
-    "experimentation_infrastructure": { "apps": { ".": { "status": "skip", "rationale": "Library, not a user-facing app" } } },
-    "error_to_insight_pipeline": { "status": "fail", "rationale": "No automation turns user feedback (Discussions) or errors into issues; conversion is manual" },
-    "fast_ci_feedback": { "status": "pass", "rationale": "Test workflow on PRs: median 6.2 min across 20 recent runs (max 9.9); scanner's 1.6 min mixes in trivial workflows" },
-    "build_performance_tracking": { "status": "pass", "rationale": "setup-uv enable-cache keyed on uv.lock in test/build-docs/publish workflows plus a paths-filter job; only dependency caching, nothing measures build time" }
+    "lint_config": {
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Ruff configured in pyproject.toml [tool.ruff.lint] (E,W,F,I,B,C4,UP), run by the local-ruff-check pre-commit hook and scripts/lint.sh"
+        }
+      }
+    },
+    "formatter": {
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "ruff format runs in the local-ruff-format pre-commit hook and scripts/format.sh; black is only a docs dependency"
+        }
+      }
+    },
+    "naming_consistency": {
+      "apps": {
+        ".": {
+          "status": "fail",
+          "rationale": "Ruff selects no pep8-naming (N) rules and the only in-repo contributing doc (docs/en/docs/contributing.md, 7 lines) links off-repo to tiangolo.com; no committed naming rules"
+        }
+      }
+    },
+    "cyclomatic_complexity": {
+      "apps": {
+        ".": {
+          "status": "fail",
+          "rationale": "C901 is explicitly in [tool.ruff.lint] ignore (\"too complex\"); no other complexity limit"
+        }
+      }
+    },
+    "code_modularization": {
+      "apps": {
+        ".": {
+          "status": "fail",
+          "rationale": "No import-linter or other boundary tooling; underscore-private modules (fastapi/_compat, fastapi/telemetry/_*.py) are convention only"
+        }
+      }
+    },
+    "build_cmd_doc": {
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "README only covers end-user install (uv add fastapi, uv run fastapi dev), but dev commands are exposed as scripts/test.sh, scripts/lint.sh, scripts/format.sh plus uv.lock and dependency-groups"
+        }
+      }
+    },
+    "unit_tests_runnable": {
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "scripts/test.sh runs `pytest -n auto --dist loadgroup tests scripts/tests/` non-interactively with no credentials (CI calls it via test-cov.sh); README does not document it, contrary to the scanner, whose match was a feature-list mention of pytest"
+        }
+      }
+    },
+    "single_test_command": {
+      "apps": {
+        ".": {
+          "status": "fail",
+          "rationale": "No in-repo doc shows running one test; scripts/test.sh forwards ${@} so `bash scripts/test.sh tests/test_x.py::test_y` would work, but nothing says so"
+        }
+      }
+    },
+    "single_command_setup": {
+      "status": "fail",
+      "rationale": "No setup script, Makefile or justfile target and no committed doc naming a bootstrap command; `uv sync` + `prek install` must be inferred from pyproject.toml and CI YAML"
+    },
+    "agentic_development": {
+      "status": "pass",
+      "rationale": "Commit 4f0152c (#15930, 2026-07-28) carries `Co-authored-by: Cursor <cursoragent@cursor.com>` (outside the scanner's 300-commit window), and translate.yml runs a pydantic-ai Agent (scripts/translate.py) on a schedule that opens PRs via pr-submit[bot], e.g. #16497-#16501"
+    },
+    "automated_pr_review": {
+      "status": "pass",
+      "rationale": "codspeed[bot] posts performance reports on PRs (e.g. #16643, #16642), guard-dependencies.yml comments and auto-closes non-member dependency PRs, detect-conflicts.yml comments on conflicts"
+    },
+    "fast_ci_feedback": {
+      "status": "pass",
+      "rationale": "Test workflow on pull_request: median 6.2 min, max 9.95 min over the last 20 completed runs (gh run list)"
+    },
+    "dead_feature_flag_detection": {
+      "status": "skip",
+      "rationale": "No feature flag system; the library is published to PyPI with no deployed app"
+    },
+    "integration_tests_exist": {
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "tests/test_tutorial/* (77 dirs) drive full docs_src apps through TestClient incl. SQLModel+SQLite and GraphQL; tests/test_telemetry/test_integrations.py runs real OTel SDK integrations in subprocesses against a local OTLP HTTP collector (_otlp.py)"
+        }
+      }
+    },
+    "test_coverage_thresholds": {
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "coverage-combine job in test.yml runs `coverage report --fail-under=100` and smokeshow.yml publishes coverage status on PRs"
+        }
+      }
+    },
+    "browser_automation": {
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library with no web UI of its own; scripts/playwright only captures docs screenshots"
+        }
+      }
+    },
+    "skills": {
+      "status": "fail",
+      "rationale": "Only fastapi/.agents/skills/fastapi/SKILL.md, package data teaching end users' agents to write FastAPI apps, not a harness-discovered root skill for working on this repo"
+    },
+    "service_flow_documented": {
+      "status": "pass",
+      "rationale": "English docs carry mermaid sequence diagrams of request and dependency flows (docs/en/docs/tutorial/dependencies/dependencies-with-yield.md, advanced/behind-a-proxy.md); no internal ARCHITECTURE.md"
+    },
+    "automated_doc_generation": {
+      "status": "pass",
+      "rationale": "22 pages in docs/en/docs/reference/ use mkdocstrings `::: fastapi.*` directives, built by build-docs.yml on every PR and deployed by deploy-docs.yml"
+    },
+    "env_template": {
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "All env vars the library reads are optional and documented: FASTAPI_OTEL_AUTO_CONFIGURE/OTEL_* in docs/en/docs/advanced/opentelemetry.md, FASTAPI_ENV in docs/en/docs/fastapi-cli.md; none are needed to develop or test"
+        }
+      }
+    },
+    "gitignore_comprehensive": {
+      "status": "fail",
+      "rationale": ".gitignore has env/venv/dist/.idea/.DS_Store but not .env or .venv (uv's default env dir)"
+    },
+    "parallel_agent_isolation": {
+      "status": "skip",
+      "rationale": "Library without services; tests use in-memory SQLite (sqlite://) and the OTLP test collector binds port 0"
+    },
+    "agent_readable_logs": {
+      "status": "skip",
+      "rationale": "Library; no local dev server or service logs to read"
+    },
+    "log_scrubbing": {
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Criterion skips libraries (as distributed_tracing and structured_logging do here); scanner matched a docstring in fastapi/telemetry/_api.py, though fastapi/telemetry/_asgi.py does redact sensitive query params in spans"
+        }
+      }
+    },
+    "secret_scanning": {
+      "status": "fail",
+      "rationale": "No gitleaks/trufflehog/detect-secrets in .pre-commit-config.yaml or workflows; platform setting not visible (security_and_analysis null, secret-scanning alerts API 404) (unverified)"
+    },
+    "pii_handling": {
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library stores no personal data; SQL/user models exist only as docs_src tutorial examples"
+        }
+      }
+    },
+    "automated_security_review": {
+      "status": "pass",
+      "rationale": "GitHub CodeQL default setup (dynamic/github-code-scanning/codeql, 1,758 runs) analyzes python, actions and javascript-typescript on PRs, e.g. refs/pull/16641/head and the Analyze (python) check on #16642; zizmor covers workflows"
+    },
+    "agent_config_reviewed": {
+      "status": "fail",
+      "rationale": "Agent-facing instructions exist (fastapi/.agents/skills/ shipped to users, 14 llm-prompt.md files steering the scheduled translation agent) but there is no CODEOWNERS and the master ruleset requires 0 approvals"
+    },
+    "agent_guardrails_config": {
+      "status": "fail",
+      "rationale": "No .claude/settings.json, .codex/config.toml, .cursor/ or Copilot firewall config; nothing keeps agents out of secrets"
+    },
+    "agent_hooks": {
+      "status": "fail",
+      "rationale": "No agent hooks; ruff/mypy/ty only run via pre-commit (prek) if the agent commits or remembers"
+    },
+    "mcp_config_hygiene": {
+      "status": "skip",
+      "rationale": "No MCP config committed (.mcp.json, .cursor/mcp.json, .vscode/mcp.json absent)"
+    },
+    "issue_templates": {
+      "status": "fail",
+      "rationale": "Only .github/ISSUE_TEMPLATE/privileged.yml (one free-form 'Issue Content' box for maintainers) plus config.yml links; no repro or acceptance-criteria fields. The bug-report repro form lives in DISCUSSION_TEMPLATE/questions.yml, not issues"
+    },
+    "backlog_health": {
+      "status": "pass",
+      "rationale": "Tracker is kept clear: the only open issue is pinned Roadmap #10370 (5.2k-char body, updated 2026-06); the last 30 closed issues were resolved (25 completed, 3 not planned, 2 duplicate) and requests are routed to Discussions"
+    },
+    "plans_in_repo": {
+      "status": "fail",
+      "rationale": "No plans/, specs, ADRs or progress files; the roadmap lives only in GitHub issue #10370"
+    },
+    "error_to_insight_pipeline": {
+      "status": "fail",
+      "rationale": "No automation turns Discussions feedback or errors into issues; add-to-project.yml only files existing issues/PRs into a project board"
+    }
   },
   "action_items": [
-    { "criterion": "agents_md", "title": "Add an AGENTS.md with dev commands and conventions",
-      "why": "Contributor instructions live off-repo (contributing.md is a 7-line link to tiangolo.com), so agents must reverse-engineer setup from CI YAML; the same gap fails single_command_setup and naming_consistency at Level 2",
-      "how": "Commit AGENTS.md giving `uv sync` + `prek install` as the bootstrap, `bash scripts/test.sh`, `bash scripts/lint.sh`, `bash scripts/format.sh`, the 100% coverage rule, the docs_src/tests pairing and naming conventions" },
-    { "criterion": "pr_templates", "title": "Add a pull request template",
-      "why": "PRs need an emoji-prefixed title and a latest-changes label (a required check), but nothing tells an agent that before it opens one",
-      "how": "Add .github/pull_request_template.md covering title format, label, regression test and docs_src example checklist" },
-    { "criterion": "codeowners", "title": "Add CODEOWNERS",
-      "why": "No path ownership exists, so agents can't tell who reviews fastapi/ versus docs/<lang>/ translations",
-      "how": "Add .github/CODEOWNERS mapping fastapi/ and tests/ to core maintainers and docs/<lang>/ to translation reviewers" }
+    {
+      "criterion": "agents_md",
+      "title": "Add an AGENTS.md with dev commands and conventions",
+      "why": "The only in-repo contributing doc is a 7-line link to tiangolo.com, so agents reverse-engineer setup from CI YAML; the same gap fails single_test_command, single_command_setup and naming_consistency at Level 2",
+      "how": "Commit a <200-line AGENTS.md giving `uv sync` + `prek install` as the bootstrap, `bash scripts/test.sh` and `bash scripts/test.sh tests/test_x.py::test_y`, `bash scripts/lint.sh`/`format.sh`, the 100% coverage gate, the docs_src/tests/test_tutorial pairing and naming rules"
+    },
+    {
+      "criterion": "pr_templates",
+      "title": "Add a pull request template",
+      "why": "PRs need an emoji-prefixed title and a label for the required latest-changes/label check, and regression-test proof is checked in CI, but nothing tells an agent before it opens a PR",
+      "how": "Add .github/pull_request_template.md with title format, label, regression test and docs_src example checklist"
+    },
+    {
+      "criterion": "codeowners",
+      "title": "Add CODEOWNERS covering code and agent prompts",
+      "why": "No path ownership and the master ruleset needs 0 approvals, so changes to fastapi/, docs/<lang>/ and the agent prompts (fastapi/.agents/, docs/*/llm-prompt.md) have no designated reviewer; also fails agent_config_reviewed at Level 3",
+      "how": "Add .github/CODEOWNERS with a `*` maintainer default plus entries for fastapi/.agents/, scripts/general-llm-prompt.md and docs/*/llm-prompt.md"
+    }
   ]
 }

@@ -1,49 +1,96 @@
 ---
 name: agent-readiness-fix
-description: Fix the failing criteria from an agent readiness report, such as adding AGENTS.md, linters, pre-commit hooks, env templates, CI checks and templates, then re-score to confirm progress. Use when the user asks to fix, remediate or improve agent readiness, to "get this repo to Level N", or to act on a readiness report's action items. Requires a report from the agent-readiness skill. Run that first if `.agent-readiness/report.json` doesn't exist.
+description: Guide a developer through closing the gaps in an agent readiness report. Auto-fix the small, reversible items; walk through the real decisions (tooling, policy, architecture) with options and trade-offs so the developer chooses; give exact steps for settings outside the repo. Use when the user asks to fix, remediate or improve agent readiness, to "get this repo to Level N", or to act on a readiness report. Requires a report from the agent-readiness skill.
+license: MIT
+metadata:
+  version: "0.2.0"
 ---
 
 # Agent Readiness Fix
 
-Turn a readiness report into repo changes, one criterion at a time, then re-score.
+The developer stays in charge of how their repo works. You do the legwork: sort the gaps, apply the obvious fixes, explain the trade-offs on the rest, and implement whatever the developer picks, in their style.
 
-## 1. Load the report
+Every failing criterion falls into one of three **lanes** (`lane` in the agent-readiness skill's `references/criteria.json`):
 
-Read `.agent-readiness/report.json`, or the path the user gives. If there's none, run the `agent-readiness` skill first. Its `report.json` lists every criterion with a status and rationale. The criterion definitions, including a `fix` hint for each, are in the agent-readiness skill's `references/criteria.json`.
+| Lane | What it covers | Who decides | What you do |
+|---|---|---|---|
+| **Auto-fix** | Small, reversible changes the repo already settles: PR/issue templates, `.env.example`, `.gitignore` gaps, a missing lockfile, documenting commands that already exist | Facts in the repo | Apply after one confirmation, then verify |
+| **Your call** | A choice of tool, policy or architecture: linter, hooks, test strategy, strictness, logging stack, feature flags, CI gates | The developer | Lay out the options, recommend one, implement their pick |
+| **Manual** | Outside the repo: branch protection, platform security settings, CLI auth, team process | The developer | Give exact steps and commands |
 
-If the report's commit (`repo.commit`) is far behind `HEAD`, re-run the report first. Its findings may be stale.
+Adjust lanes for this repo when it's obvious. Promote a "Your call" item to auto when the repo already settles the choice. Example: Ruff is the linter, so `ruff format` is the formatter. Demote an auto item when it isn't clear-cut. Example: the README has a strong voice the team clearly cares about.
 
-## 2. Pick targets
+## 1. Load
 
-If the user names a focus ("just security", "get us to Level 3", "don't touch CI"), follow it. Otherwise:
+- Read `.agent-readiness/report.json`, or the path the user gives. If there's none, run the `agent-readiness` skill first. If `repo.commit` is well behind `HEAD`, re-run the report before fixing anything.
+- Read `.agent-readiness/preferences.json` if it exists. It holds earlier choices, waivers and working style. Don't re-ask anything it already answers.
+- Keep `references/playbook.md` open. It lists the decisions per criterion, with options and trade-offs.
 
-1. Start with failing criteria **at the current level**. These are what block the next level. Then do the ones below it.
-2. Within that set, take `basic` first, then `intermediate`. Leave `advanced` unless the user asks.
-3. Cap a run at about **5 criteria**. Smaller batches are easier to review.
+## 2. Agree on how to work
 
-Sort the candidates into three groups:
+Ask once, and only what the user's request didn't already say. Use your harness's question tool if it has one; otherwise offer numbered options in chat. Ask at most three questions:
 
-- **Repo-local changes you can make**: config files, docs, scripts, templates, CI workflow steps.
-- **Settings outside the repo**: branch protection, secret scanning or push protection, repository labels. Don't change these yourself. Give the user the exact steps or command (for example `gh api -X PUT repos/{owner}/{repo}/branches/main/protection ...`) and let them run it, unless they explicitly ask you to and you have the access.
-- **Decisions that need the user**: new paid or external services (error tracking, analytics, feature flag providers), switching a project to strict typing when that creates hundreds of errors, adding large new frameworks. Propose these and don't apply them.
+1. **Scope:** next level only (default), all `basic` and `intermediate` gaps, or a focus area such as "testing" or "security".
+2. **Auto-fixes:** apply them and show a summary (default), show each change before applying, or plan only, where you write the plan and they do the work.
+3. **Commits:** leave changes uncommitted (default), or one commit per fix on a branch.
 
-Show the plan as a short list (criterion, what you'll change, which files) and get a go-ahead before editing, unless the user already told you to proceed.
+Save the answers under `style` in `preferences.json`.
 
-## 3. Fix, one criterion at a time
+## 3. Write the plan
 
-- **Match the repository.** Use its package manager, task runner, existing config style and naming. Extend an existing config rather than adding a parallel one. Example: add a rule to the existing ESLint config instead of installing a second linter.
-- **Keep it small and idiomatic.** Use the ecosystem default tool (Ruff for Python, Biome or ESLint for JS/TS, golangci-lint for Go, Clippy for Rust) unless the repo already uses something else.
-- **Verify each change.** Run the new lint, typecheck, hook or test command and confirm it works. If a new check fails on existing code, either fix the trivial violations or configure a baseline. Don't leave the repo with a red check the user didn't agree to.
-- **Write AGENTS.md from what's true.** Commands must actually work: run them, or read the scripts that define them. Use `references/agents-md-template.md` as the outline. If harness-specific files already exist (CLAUDE.md, .cursor/rules, etc.), keep them and make AGENTS.md the shared source. A one-line pointer from the specific file to AGENTS.md is enough.
-- **Templates and docs should be short and specific to the repo**: a PR template with the checks this repo runs, and an `.env.example` listing the variables the code actually reads.
-- **Never commit secrets.** `.env.example` holds placeholders, never real values.
+Pick the targets: failing and `review` criteria within scope, current level first, then lower levels. Write `.agent-readiness/fix-plan.md` with three checklists, one per lane. For each item, include:
 
-Work on a branch if the repo is under git. Don't commit or push unless the user asks.
+- The criterion name and id, and its level
+- Why it matters for an agent in *this* repo, in one concrete line. Example: "Lint only runs in CI, about 9 minutes after a push."
+- What would change: the files and commands
+- For "Your call" items: the question and the short option list
 
-## 4. Re-score
+In chat, give a compact summary: the counts per lane, the auto-fix list, and the first decision. The plan file belongs to the developer. They may tick, strike or annotate items, so re-read it before acting on it.
 
-Re-run the report: scan, decide, render, following the agent-readiness skill. The new `report.json` stays grounded on the previous one, so only the criteria you touched should move. Then tell the user:
+## 4. Auto-fix lane
 
-- The level and pass rate before and after
-- Each criterion you flipped, and the evidence
-- What's left for them: settings changes, external services, and items you deliberately skipped
+Unless `style` says to apply directly, confirm the auto-fix list once. Then work through it one item at a time:
+
+- Extend what exists rather than replacing it. Match the repo's package manager, file layout and tone.
+- Verify each fix: run the command you documented, validate the template renders, or check that the lockfile installs.
+- Stop and ask if an "auto" fix turns out to touch history or secrets. Example: a tracked `.env` should be untracked and its keys rotated. That's the developer's call.
+- Report each one as: criterion → files changed → how you verified it.
+
+## 5. "Your call" lane: walk through the decisions
+
+For each item, or a batch of up to three closely related ones such as linter, formatter and hooks:
+
+1. **Why it matters here.** One line, specific to this repo.
+2. **Options.** Two to four options from the playbook, filtered to this stack. Give each a one-line trade-off and an effort estimate (S/M/L).
+3. **Recommendation.** Say which option you'd pick and why, based on what the repo already uses.
+4. **Two standing options.** Always also offer *Skip for now*, and *Doesn't apply to us*. The second becomes a waiver: write `"waivers": {"<criterion_id>": "<their reason>"}` to `preferences.json`. Future reports show it as waived, not failing.
+
+Record each pick under `choices` in `preferences.json`. Then implement exactly what they chose, in their style:
+
+- **Stage big changes so nothing goes red unannounced:**
+  - Strict typing: new and changed files first, or a baseline file.
+  - Coverage: report-only, then a floor at today's number.
+  - New CI checks: non-blocking first.
+  - Observability: one service first.
+- **External services** (Sentry, PostHog, LaunchDarkly and similar): never sign up, create accounts or add keys. Scaffold the integration behind env vars, add the variables to `.env.example`, and list what the developer must do.
+- **Turn prose into enforcement.** When the developer states a rule, such as "agents must never touch migrations", offer to make it a hook, a deny rule or a lint rule. Prose in AGENTS.md is advisory; config is enforced.
+- **Plan-only mode, or "teach me".** Instead of editing, write the exact steps, commands and snippets into `fix-plan.md` for the developer to do.
+
+## 6. Manual lane
+
+For each item, give exact steps: the UI path and/or the CLI command, then how to confirm it worked. Example: `gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input protection.json`. Run settings-changing commands only if the developer explicitly asks and has the access.
+
+## 7. Re-score and close
+
+Re-run the agent-readiness skill. Waivers apply automatically. Then:
+
+- Update the checkboxes in `fix-plan.md`.
+- Tell the developer the level and pass rate before and after, and which criteria flipped, with evidence.
+- List what's still pending: manual steps, deferred decisions, and anything you deliberately left alone.
+
+## Rules
+
+- **No silent product decisions.** Anything that changes how the team works is the developer's call: a new tool, a new required check, a new service, stricter rules.
+- **Keep AGENTS.md short and true.** Draft only verified facts: commands you ran, paths that exist. Get conventions, gotchas and "don'ts" from the developer by asking two or three questions. Aim for about 200 lines or fewer. A 2026 ETH Zurich study found LLM-generated context files raised agent cost by more than 20% without improving success, developer-written ones did only slightly better, and directory overviews didn't help at all.
+- **One tool beats two.** Extend existing configs before adding a parallel one.
+- **Leave git history and the remote alone.** Never commit secrets, never push, never rewrite history. Commit only if `style.commits` says to.

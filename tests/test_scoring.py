@@ -96,7 +96,42 @@ class MergeTest(unittest.TestCase):
         self.assertEqual(merged["status"], "final")
 
 
+class RubricTest(unittest.TestCase):
+    def test_every_criterion_is_well_formed(self):
+        lanes = {l["id"] for l in report.CRITERIA["lanes"]}
+        pillars = {p["id"] for p in report.CRITERIA["pillars"]}
+        ids = [c["id"] for c in META]
+        self.assertEqual(len(ids), len(set(ids)))
+        for c in META:
+            self.assertIn(c["lane"], lanes, c["id"])
+            self.assertIn(c["pillar"], pillars, c["id"])
+            self.assertIn(c["level"], range(1, 6), c["id"])
+            self.assertIn(c["scope"], ("repo", "app"), c["id"])
+
+    def test_every_criterion_has_a_scanner_check(self):
+        import scan
+        self.assertEqual(sorted(set(c["id"] for c in META) - set(scan.CHECKS)), [])
+
+    def test_lane_counts_cover_failing_criteria(self):
+        r = make_report({1: ["fail"] * count(1)})
+        report.normalize(r, allow_review=False)
+        lanes = report.lane_counts(r["criteria"])
+        failing = sum(1 for c in r["criteria"].values() if c["status"] == "fail")
+        self.assertEqual(sum(lanes.values()), failing)
+
+
 class EndToEndTest(unittest.TestCase):
+    def test_waivers_skip_and_are_labelled(self):
+        with tempfile.TemporaryDirectory() as out:
+            (Path(out) / "preferences.json").write_text(json.dumps(
+                {"waivers": {"product_analytics_instrumentation": "internal tool", "readme": "testing"}}), encoding="utf-8")
+            subprocess.run([sys.executable, str(SCRIPTS / "scan.py"), str(ROOT), "--out", out, "--offline"],
+                           capture_output=True, text=True, check=True)
+            draft = json.loads((Path(out) / "draft.json").read_text(encoding="utf-8"))
+            readme = draft["criteria"]["readme"]
+            self.assertEqual((readme["status"], readme["waived"]), ("skip", True))
+            self.assertIn("internal tool", draft["criteria"]["product_analytics_instrumentation"]["rationale"])
+
     def test_scan_and_render_this_repo(self):
         with tempfile.TemporaryDirectory() as out:
             run = lambda *a: subprocess.run([sys.executable, *a], capture_output=True, text=True, check=True)

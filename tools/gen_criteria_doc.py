@@ -16,6 +16,7 @@ OUT = ROOT / "docs" / "criteria.md"
 def render():
     data = json.loads(SRC.read_text(encoding="utf-8"))
     pillars = {p["id"]: p for p in data["pillars"]}
+    lanes = {l["id"]: l["name"] for l in data["lanes"]}
     lines = ["# Criteria", "",
              f"<!-- Generated from {SRC.relative_to(ROOT).as_posix()} by tools/gen_criteria_doc.py. Do not edit. -->", "",
              f"{len(data['criteria'])} criteria across {len(data['pillars'])} pillars and {len(data['levels'])} levels. "
@@ -23,12 +24,13 @@ def render():
     for lv in data["levels"]:
         items = [c for c in data["criteria"] if c["level"] == lv["level"]]
         lines += [f"## Level {lv['level']}: {lv['name']}", "", lv["summary"], "",
-                  "| Criterion | Pillar | Scope | Difficulty | Passes when |", "|---|---|---|---|---|"]
+                  "| Criterion | Pillar | Scope | Difficulty | Fix lane | Passes when |", "|---|---|---|---|---|---|"]
         for c in sorted(items, key=lambda c: list(pillars).index(c["pillar"])):
             lines.append(f"| **{c['name']}**<br>`{c['id']}` | {pillars[c['pillar']]['name']} | {c['scope']} | "
-                         f"{c['difficulty']} | {c['pass'].replace('|', '/')} |")
+                         f"{c['difficulty']} | {lanes[c['lane']]} | {c['pass'].replace('|', '/')} |")
         lines.append("")
     lines += ["## Pillars", ""] + [f"- **{p['name']}**: {p['why']}" for p in data["pillars"]] + [""]
+    lines += ["## Fix lanes", ""] + [f"- **{l['name']}**: {l['summary']}" for l in data["lanes"]] + [""]
     return "\n".join(lines)
 
 

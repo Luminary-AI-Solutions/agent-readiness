@@ -1,6 +1,10 @@
 ---
 name: agent-readiness
-description: Score how ready a repository is for autonomous coding agents (5 levels, 9 pillars, ~80 criteria) and render an HTML dashboard plus a markdown summary. Use when the user asks for an agent readiness report, score or audit, asks whether a codebase is "agent-ready" or why agents struggle in it, wants to know what to fix so agents work better in a repo, or asks to re-run or refresh a readiness report.
+description: Score how ready a repository is for autonomous coding agents (5 levels, 9 pillars, 93 criteria) and render an HTML dashboard plus a markdown summary. Use when the user asks for an agent readiness report, score or audit, asks whether a codebase is "agent-ready" or why agents struggle in it, wants to know what to fix so agents work better in a repo, or asks to re-run or refresh a readiness report.
+license: MIT
+compatibility: Needs Python 3.10+ and git. The gh CLI is optional, for platform checks. Works in any harness that loads SKILL.md skills.
+metadata:
+  version: "0.2.0"
 ---
 
 # Agent Readiness Report
@@ -13,7 +17,7 @@ The work is split three ways so results are repeatable:
 2. **You** read the evidence, decide what the scanner can't (`review` items), sanity-check its other verdicts, and write `decisions.json`.
 3. **`scripts/report.py`** merges your decisions, computes the score (the model never does arithmetic), and renders `report.html`, `summary.md` and `history.jsonl`.
 
-`<skill-dir>` below means the directory containing this file. Scripts need Python 3.8+ and the standard library only. If Python isn't available, use **Manual mode** at the end.
+`<skill-dir>` below means the directory containing this file. Scripts need Python 3.10+ and the standard library only. If Python isn't available, use **Manual mode** at the end.
 
 ## Workflow
 
@@ -49,8 +53,8 @@ Read `<skill-dir>/references/criteria.json` for each criterion's `pass` rule. Th
 - **Every `review` item needs a verdict**: `pass`, `fail` or `skip`.
 - **Spot-check `fail` and `pass` verdicts.** The scanner matches on filenames and dependency names, so it can be wrong. Override it when the evidence says otherwise. Common cases: a tool configured under an unusual name (false fail), or a config file that exists but nothing runs (false pass).
 - **Gather evidence cheaply.** Read files, list directories, grep, and run read-only commands like `git log`, `gh api` or `gh run list`. Don't install dependencies, run builds or start services unless the user asks for it.
-- **Use `skip` only when the criterion genuinely doesn't apply.** Examples: health checks for a library, DAST for a CLI, N+1 detection without a database. The criterion's `pass` text says when skipping is allowed. Hard-to-find evidence is not a reason to skip. Mark it `fail`, and add "(unverified)" to the rationale if you couldn't check, such as a platform setting that needs admin access.
-- **Stay consistent with the last run.** If an entry has a `previous` field, keep that verdict unless the evidence actually changed, and say what changed. This keeps scores stable from run to run.
+- **Use `skip` only when the criterion genuinely doesn't apply.** Examples: health checks for a library, DAST for a CLI, N+1 detection without a database. The criterion's `pass` text says when skipping is allowed, including criteria that skip when a prerequisite is missing, so one gap isn't counted at several levels. Hard-to-find evidence is not a reason to skip. Mark it `fail`, and add "(unverified)" to the rationale if you couldn't check, such as a platform setting that needs admin access.
+- **Stay consistent with the last run.** If an entry has a `previous` field, keep that verdict unless the evidence actually changed, and say what changed. This keeps scores stable from run to run. Two exceptions: a previous verdict that contradicts the criterion's `pass` text is a mistake, so correct it; and a previous verdict nobody reviewed (the last report's entry had `"source": "scan"`) carries no extra weight.
 - **Write one-sentence rationales with concrete evidence**: file paths, tool names, counts, durations. For example: "ESLint flat config in apps/web/eslint.config.js, run by the `lint` script and CI" rather than "Linting is set up."
 - **Don't be generous.** An agent can only use what's committed and discoverable. A readiness model that flatters the repo is useless to the person reading it.
 
@@ -86,7 +90,7 @@ Write only what you change or confirm to `<out>/decisions.json`. Use your file-w
 python <skill-dir>/scripts/report.py <out>/draft.json --decisions <out>/decisions.json
 ```
 
-This writes `report.json`, `report.html`, `summary.md` and appends to `history.jsonl`. It refuses to score while any criterion is still `review`. Fix those in `decisions.json` and re-run. Use `--allow-review` only for a deliberately provisional report.
+This writes `report.json`, `report.html` and `summary.md`, and adds a point to `history.jsonl`. A re-run on the same commit with the same rubric replaces the last point instead of adding one. It refuses to score while any criterion is still `review`. Fix those in `decisions.json` and re-run. Use `--allow-review` only for a deliberately provisional report.
 
 ### 5. Present
 
@@ -95,9 +99,12 @@ Show the user:
 - The level and its name, the overall pass rate, and how far they are from the next level (from `summary.md`)
 - The pillar table, or the weakest two or three pillars
 - Your action items
+- The **fix lanes** line from `summary.md`: how many failures are auto-fixable, how many are the developer's call, and how many need manual steps
 - Where `report.html` is. Open it if your environment can open files or a browser.
 
-Then offer to fix the gaps. If the `agent-readiness-fix` skill is installed, that's its job.
+Then offer to fix the gaps. If the `agent-readiness-fix` skill is installed, that's its job: it auto-fixes the small items and walks the developer through the decisions.
+
+**Waivers.** A team can decide a criterion doesn't apply to them, for example product analytics in an internal tool. Waivers live in `.agent-readiness/preferences.json` as `{"waivers": {"<criterion_id>": "<reason>"}}`. The scan marks waived criteria as skipped, and the dashboard labels them "Waived". Don't override a waiver. If the evidence suggests it's no longer right, mention that to the user.
 
 Mention what's worth committing. `report.json` and `history.jsonl` let the next run stay consistent and let the dashboard show a trend. `draft.json` and `decisions.json` are working files. Don't commit anything unless the user asks.
 
