@@ -1,0 +1,900 @@
+{
+  "version": 1,
+  "threshold": 0.8,
+  "levels": [
+    {
+      "level": 1,
+      "name": "Functional",
+      "summary": "Code runs and basic tooling exists, but setup is manual and validation is thin."
+    },
+    {
+      "level": 2,
+      "name": "Documented",
+      "summary": "Workflows are written down for humans and agents; local guardrails catch mistakes early."
+    },
+    {
+      "level": 3,
+      "name": "Standardized",
+      "summary": "Processes are enforced by automation: integration tests, security scanning, observability."
+    },
+    {
+      "level": 4,
+      "name": "Optimized",
+      "summary": "Feedback loops are fast and measured; quality and delivery are tracked continuously."
+    },
+    {
+      "level": 5,
+      "name": "Autonomous",
+      "summary": "The system checks and improves itself; agents can take on long-running work end to end."
+    }
+  ],
+  "pillars": [
+    {
+      "id": "style",
+      "name": "Style & Validation",
+      "why": "Linters, type checkers and formatters catch mistakes in seconds, so agents don't burn cycles waiting on CI to find a typo."
+    },
+    {
+      "id": "build",
+      "name": "Build System",
+      "why": "Deterministic, documented build and release commands let an agent verify its change compiles and ships without guessing flags."
+    },
+    {
+      "id": "testing",
+      "name": "Testing",
+      "why": "Fast, locally runnable tests are the agent's feedback loop: change, run, read the failure, iterate."
+    },
+    {
+      "id": "docs",
+      "name": "Documentation",
+      "why": "Written instructions replace tribal knowledge. Agents only know what is discoverable in the repo."
+    },
+    {
+      "id": "devenv",
+      "name": "Dev Environment",
+      "why": "Reproducible environments remove 'works on my machine' for humans and agents alike."
+    },
+    {
+      "id": "observability",
+      "name": "Debugging & Observability",
+      "why": "Logs, traces and metrics turn 'it failed' into 'it failed because X was null in Y', which an agent can act on."
+    },
+    {
+      "id": "security",
+      "name": "Security & Governance",
+      "why": "Agents move fast. Branch protection, secret scanning and ownership rules make sure they move fast safely."
+    },
+    {
+      "id": "tasks",
+      "name": "Task Discovery",
+      "why": "Structured issues, labels and templates let an agent find, scope and report on work without a human translating."
+    },
+    {
+      "id": "product",
+      "name": "Product & Experimentation",
+      "why": "Analytics and experiments let an agent see whether a change mattered, not just whether it compiled."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "lint_config",
+      "name": "Linter configured",
+      "pillar": "style",
+      "level": 1,
+      "scope": "app",
+      "difficulty": "basic",
+      "pass": "A linter is configured for the app's primary language (ESLint, Biome, Ruff, Flake8, Pylint, golangci-lint, Clippy, RuboCop, Checkstyle, SwiftLint, ktlint, etc.).",
+      "fix": "Add the ecosystem-default linter with a committed config and a `lint` script/target."
+    },
+    {
+      "id": "type_check",
+      "name": "Type checking",
+      "pillar": "style",
+      "level": 1,
+      "scope": "app",
+      "difficulty": "basic",
+      "pass": "The language is statically typed (Go, Rust, Java, C#, Kotlin, Swift, C/C++), or a type checker is configured (tsconfig.json, mypy, pyright, Sorbet, etc.).",
+      "fix": "Add TypeScript/tsconfig or mypy/pyright with a `typecheck` command."
+    },
+    {
+      "id": "formatter",
+      "name": "Code formatter",
+      "pillar": "style",
+      "level": 1,
+      "scope": "app",
+      "difficulty": "basic",
+      "pass": "An automatic formatter is configured or built into the toolchain and used (Prettier, Biome, Black, Ruff format, gofmt, rustfmt, clang-format, etc.).",
+      "fix": "Add the ecosystem formatter with a config file and a `format` command."
+    },
+    {
+      "id": "strict_typing",
+      "name": "Strict typing",
+      "pillar": "style",
+      "level": 2,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Type checking runs in strict mode (`strict: true` in tsconfig, mypy `strict = true`, pyright `strict`), or the language is statically typed by default.",
+      "fix": "Turn on strict mode; fix or explicitly suppress the resulting errors."
+    },
+    {
+      "id": "pre_commit_hooks",
+      "name": "Pre-commit hooks",
+      "pillar": "style",
+      "level": 2,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "Local hooks run lint/format/type checks before commit (pre-commit, Husky, lefthook, simple-git-hooks, lint-staged, a committed .githooks/ wired via core.hooksPath).",
+      "fix": "Add pre-commit/Husky/lefthook running the fast checks on staged files."
+    },
+    {
+      "id": "naming_consistency",
+      "name": "Naming conventions",
+      "pillar": "style",
+      "level": 2,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Naming conventions are documented (AGENTS.md, CONTRIBUTING, style guide) or enforced by lint rules (e.g. ESLint naming-convention, pep8-naming).",
+      "fix": "Document conventions in AGENTS.md and/or enable a naming lint rule."
+    },
+    {
+      "id": "large_file_detection",
+      "name": "Large file guard",
+      "pillar": "style",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Something prevents large/binary files from landing in git: Git LFS via .gitattributes, a check-added-large-files hook, or a CI size check.",
+      "fix": "Add `check-added-large-files` to pre-commit or a CI size check; use LFS for binaries."
+    },
+    {
+      "id": "tech_debt_tracking",
+      "name": "Tech debt tracking",
+      "pillar": "style",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "TODO/FIXME comments are tracked or constrained: a lint rule requiring ticket references, a TODO scanner in CI, or a debt register that is maintained.",
+      "fix": "Require `TODO(#123)` format via lint rule, or add a TODO scanner to CI."
+    },
+    {
+      "id": "dead_code_detection",
+      "name": "Dead code detection",
+      "pillar": "style",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "A dedicated detector for unused exports, files or functions runs in CI or hooks (knip, ts-prune, vulture, deadcode, unparam). General unused-import/unused-variable lint rules don't count on their own.",
+      "fix": "Add knip/vulture/deadcode to CI."
+    },
+    {
+      "id": "duplicate_code_detection",
+      "name": "Duplicate code detection",
+      "pillar": "style",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Copy-paste detection runs in CI (jscpd, PMD CPD, SonarQube duplication gate, etc.).",
+      "fix": "Add jscpd (or the ecosystem equivalent) with a threshold in CI."
+    },
+    {
+      "id": "cyclomatic_complexity",
+      "name": "Complexity limits",
+      "pillar": "style",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Function complexity is measured and limited (ESLint `complexity`, Ruff C901/mccabe, gocyclo, Clippy cognitive_complexity, Sonar, etc.).",
+      "fix": "Enable a complexity rule with a sensible max in the existing linter."
+    },
+    {
+      "id": "code_modularization",
+      "name": "Module boundaries enforced",
+      "pillar": "style",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Architectural boundaries are enforced by tooling (dependency-cruiser, eslint-plugin-boundaries, Nx module boundaries, import-linter, ArchUnit, Go internal/ packages used deliberately).",
+      "fix": "Add dependency-cruiser/import-linter rules for the main layers."
+    },
+    {
+      "id": "n_plus_one_detection",
+      "name": "N+1 query detection",
+      "pillar": "style",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Apps that use an ORM/database have N+1 detection (Bullet, nplusone, Django assertNumQueries patterns, Prisma/Hibernate query logging checks). Skip if the app has no database access.",
+      "fix": "Add an N+1 detector in test mode."
+    },
+    {
+      "id": "build_cmd_doc",
+      "name": "Build command documented",
+      "pillar": "build",
+      "level": 1,
+      "scope": "app",
+      "difficulty": "basic",
+      "pass": "The exact commands to install, build and run are written down (README, AGENTS.md, CONTRIBUTING) or exposed as obvious scripts (package.json scripts, Makefile, justfile, Taskfile).",
+      "fix": "Add a 'Commands' section to AGENTS.md listing install/build/test/lint/run."
+    },
+    {
+      "id": "deps_pinned",
+      "name": "Dependencies locked",
+      "pillar": "build",
+      "level": 1,
+      "scope": "app",
+      "difficulty": "basic",
+      "pass": "A lockfile is committed (package-lock.json, pnpm-lock.yaml, yarn.lock, bun.lock(b), uv.lock, poetry.lock, Pipfile.lock, Cargo.lock for binaries, go.sum, Gemfile.lock, composer.lock, etc.).",
+      "fix": "Generate and commit the lockfile; stop ignoring it."
+    },
+    {
+      "id": "vcs_cli_tools",
+      "name": "VCS CLI available",
+      "pillar": "build",
+      "level": 2,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "The hosting platform's CLI (gh, glab, az repos, etc.) is installed and authenticated in the environment the agent runs in, so it can open PRs and read CI/issue state.",
+      "fix": "Install and authenticate `gh`/`glab` in the dev environment or devcontainer."
+    },
+    {
+      "id": "single_command_setup",
+      "name": "Single-command setup",
+      "pillar": "build",
+      "level": 2,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "A fresh clone can be bootstrapped with one documented command (`make setup`, `./scripts/bootstrap`, `just setup`, `npm run setup`, devcontainer, `mise install && ...`).",
+      "fix": "Add a bootstrap script/target that installs deps, copies env templates and prepares local services."
+    },
+    {
+      "id": "agentic_development",
+      "name": "Agents already in the loop",
+      "pillar": "build",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "There is evidence agents already work here: agent co-author trailers in recent commits, agent config dirs (.claude/, .cursor/, .codex/, .factory/, .github/copilot-instructions.md), or agent bot PRs.",
+      "fix": "Start routing small tasks through an agent; commit its config so the setup is shared."
+    },
+    {
+      "id": "automated_pr_review",
+      "name": "Automated PR review",
+      "pillar": "build",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Pull requests get automated review beyond CI pass/fail: an AI reviewer, a review bot, Danger, or policy bots that comment on PRs.",
+      "fix": "Enable an AI code reviewer or Danger rules on PRs."
+    },
+    {
+      "id": "release_automation",
+      "name": "Release automation",
+      "pillar": "build",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Releases/deploys are triggered by automation (CD workflow on merge/tag, semantic-release, changesets, release-please, GoReleaser, platform auto-deploy like Vercel/Netlify/Fly connected to the repo).",
+      "fix": "Add a CD workflow on merge to main or a tag-driven release tool."
+    },
+    {
+      "id": "monorepo_tooling",
+      "name": "Monorepo tooling",
+      "pillar": "build",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Multi-app repos use workspace tooling (pnpm/npm/yarn workspaces, Turborepo, Nx, Bazel, Pants, Cargo/Go workspaces, uv workspaces). Skip for single-app repos.",
+      "fix": "Declare workspaces and add a task runner (Turborepo/Nx) for cross-app commands."
+    },
+    {
+      "id": "unused_dependencies_detection",
+      "name": "Unused dependency detection",
+      "pillar": "build",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Unused dependencies are detected in CI or hooks (knip, depcheck, deptry, cargo-udeps/machete, `go mod tidy` diff check).",
+      "fix": "Add knip/depcheck/deptry/`go mod tidy -diff` to CI."
+    },
+    {
+      "id": "fast_ci_feedback",
+      "name": "Fast CI feedback",
+      "pillar": "build",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "The slowest workflow that runs on pull requests typically finishes in about 10 minutes or less (median of recent runs). Fail if there is no CI at all.",
+      "fix": "Cache dependencies, split/parallelize jobs, run only affected targets."
+    },
+    {
+      "id": "deployment_frequency",
+      "name": "Regular deployments",
+      "pillar": "build",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Releases or deploys happen regularly (e.g. several in the last 90 days, visible via tags, releases, or deploy workflow runs). Skip for libraries with no deploy target only if releases also aren't applicable.",
+      "fix": "Automate releases so shipping is cheap; release smaller and more often."
+    },
+    {
+      "id": "build_performance_tracking",
+      "name": "Build performance tracked",
+      "pillar": "build",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Builds are cached or measured: dependency or build caching in CI (actions/cache, setup-* cache), Turborepo/Nx/Bazel remote cache, sccache, or CI timing dashboards and build-time budgets.",
+      "fix": "Enable a build cache and track build durations in CI."
+    },
+    {
+      "id": "release_notes_automation",
+      "name": "Release notes automated",
+      "pillar": "build",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Changelogs or release notes are generated from commits/PRs (changesets, release-please, semantic-release, git-cliff, GitHub generated notes, conventional commits enforced).",
+      "fix": "Adopt conventional commits + release-please/changesets."
+    },
+    {
+      "id": "feature_flag_infrastructure",
+      "name": "Feature flags",
+      "pillar": "build",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Deployed apps have a feature flag system (LaunchDarkly, Unleash, GrowthBook, Flagsmith, PostHog flags, Statsig, OpenFeature, or a deliberate in-house system). Skip for libraries/CLIs.",
+      "fix": "Introduce a flag provider (OpenFeature-compatible) so risky changes can ship dark."
+    },
+    {
+      "id": "heavy_dependency_detection",
+      "name": "Bundle size guard",
+      "pillar": "build",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Frontend/bundled apps have a size budget or analyzer in CI (size-limit, bundlesize, bundle analyzer with thresholds, Lighthouse CI budgets). Skip for non-bundled apps.",
+      "fix": "Add size-limit or a bundle budget check to CI."
+    },
+    {
+      "id": "version_drift_detection",
+      "name": "Version drift detection",
+      "pillar": "build",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Monorepos keep shared dependency versions aligned (syncpack, manypkg, pnpm catalogs, Renovate group rules, Bazel/Gradle version catalogs). Skip for single-app repos.",
+      "fix": "Add syncpack/manypkg or pnpm catalogs."
+    },
+    {
+      "id": "progressive_rollout",
+      "name": "Progressive rollout",
+      "pillar": "build",
+      "level": 5,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Deploys can roll out gradually (canary, percentage rollouts, blue/green, Argo Rollouts, Flagger, platform traffic splitting). Skip for libraries/CLIs.",
+      "fix": "Add canary or percentage rollout to the deploy path."
+    },
+    {
+      "id": "rollback_automation",
+      "name": "Automated rollback",
+      "pillar": "build",
+      "level": 5,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "There is a documented one-step or automatic rollback (platform instant rollback, rollback workflow, Argo/Flagger auto-abort on bad metrics). Skip for libraries/CLIs.",
+      "fix": "Document the rollback command; add automatic abort on failed health checks."
+    },
+    {
+      "id": "dead_feature_flag_detection",
+      "name": "Stale flag cleanup",
+      "pillar": "build",
+      "level": 5,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Stale feature flags are detected and cleaned up (flag provider stale reports wired to issues, Piranha, a CI check). Skip if there is no flag system.",
+      "fix": "Wire stale-flag reports into issues or add a cleanup check."
+    },
+    {
+      "id": "unit_tests_exist",
+      "name": "Unit tests exist",
+      "pillar": "testing",
+      "level": 1,
+      "scope": "app",
+      "difficulty": "basic",
+      "pass": "The app has meaningful unit tests (test files alongside or in a tests/ dir; more than a placeholder).",
+      "fix": "Add a test framework and a first set of tests around core logic."
+    },
+    {
+      "id": "unit_tests_runnable",
+      "name": "Tests runnable locally",
+      "pillar": "testing",
+      "level": 1,
+      "scope": "app",
+      "difficulty": "basic",
+      "pass": "There is a documented, single command that runs the tests locally without special credentials (`npm test`, `pytest`, `go test ./...`, `cargo test`, `make test`).",
+      "fix": "Expose one `test` command and document it in AGENTS.md."
+    },
+    {
+      "id": "test_naming_conventions",
+      "name": "Test naming conventions",
+      "pillar": "testing",
+      "level": 2,
+      "scope": "app",
+      "difficulty": "basic",
+      "pass": "Test files follow a consistent, tool-recognized pattern (*.test.ts, *_test.go, test_*.py, configured testMatch/testpaths).",
+      "fix": "Pick one pattern and configure the runner to match it."
+    },
+    {
+      "id": "integration_tests_exist",
+      "name": "Integration / E2E tests",
+      "pillar": "testing",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "There are tests that exercise components together or end to end (integration/ or e2e/ suites, Playwright, Cypress, testcontainers, API tests against a running service).",
+      "fix": "Add an integration or Playwright/E2E suite for the critical path."
+    },
+    {
+      "id": "test_isolation",
+      "name": "Test isolation",
+      "pillar": "testing",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Tests are isolated and parallel-safe: run in parallel (pytest-xdist, Jest/Vitest workers, go test -race/-parallel), use fixtures/factories, no shared mutable global state or order dependence.",
+      "fix": "Enable parallel test runs and fix order-dependent tests."
+    },
+    {
+      "id": "test_coverage_thresholds",
+      "name": "Coverage tracked",
+      "pillar": "testing",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Coverage is measured and either enforced with a threshold or reported on PRs (coverage thresholds in config, Codecov/Coveralls, CI coverage gate).",
+      "fix": "Collect coverage in CI and set a floor that ratchets upward."
+    },
+    {
+      "id": "flaky_test_detection",
+      "name": "Flaky test detection",
+      "pillar": "testing",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Flaky tests are detected or quarantined (retry-and-report, quarantine lists, Trunk/BuildPulse/Datadog CI visibility, stress-run jobs, flaky-test issue automation).",
+      "fix": "Turn on test retries with reporting, and quarantine known-flaky tests."
+    },
+    {
+      "id": "test_performance_tracking",
+      "name": "Test performance tracked",
+      "pillar": "testing",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Test durations or benchmarks are tracked (slowest-test reporting, --durations in CI, benchmark workflows, CI analytics).",
+      "fix": "Report slowest tests in CI; add benchmarks for hot paths."
+    },
+    {
+      "id": "readme",
+      "name": "README",
+      "pillar": "docs",
+      "level": 1,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "A README exists and explains what the project is and how to get it running (not just a title or template boilerplate).",
+      "fix": "Write a README with purpose, setup, and run/test commands."
+    },
+    {
+      "id": "agents_md",
+      "name": "Agent instructions file",
+      "pillar": "docs",
+      "level": 2,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "An agent instructions file exists with real, repo-specific content: AGENTS.md (the cross-harness standard), or a harness-specific equivalent (CLAUDE.md, GEMINI.md, .cursor/rules, .github/copilot-instructions.md, .windsurfrules). Must cover commands and conventions, not just a stub.",
+      "fix": "Create AGENTS.md: project map, commands (install/build/test/lint), conventions, gotchas. Symlink or reference it from harness-specific files."
+    },
+    {
+      "id": "documentation_freshness",
+      "name": "Docs kept fresh",
+      "pillar": "docs",
+      "level": 2,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "Key docs in the repo (README, AGENTS.md or equivalent, CONTRIBUTING) were each updated within 180 days of the repository's latest commit, so they move with the code. A stub that only links elsewhere counts as present but not substantive.",
+      "fix": "Review and refresh README/AGENTS.md against the current commands."
+    },
+    {
+      "id": "skills",
+      "name": "Agent skills / commands",
+      "pillar": "docs",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Reusable agent skills or commands for working on this repo are committed where harnesses discover them (.claude/skills, .agents/skills, .factory/skills, .codex/skills, .cursor/skills, .github/skills, or custom slash-command/prompt dirs). Skills shipped as package data for end users don't count.",
+      "fix": "Capture a repeated workflow (release, migration, debugging) as a SKILL.md."
+    },
+    {
+      "id": "api_schema_docs",
+      "name": "API schema documented",
+      "pillar": "docs",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Apps that expose an API publish a machine-readable schema (OpenAPI/Swagger, GraphQL SDL, protobuf, tRPC/zod schemas exported, JSON Schema). Skip for apps with no API surface.",
+      "fix": "Generate an OpenAPI spec (or SDL) from the code and commit/serve it."
+    },
+    {
+      "id": "service_flow_documented",
+      "name": "Architecture documented",
+      "pillar": "docs",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Architecture or key flows are documented (ARCHITECTURE.md, docs/ with diagrams, Mermaid/PlantUML, ADRs) beyond what the README says.",
+      "fix": "Add ARCHITECTURE.md with a component map and one or two key request flows."
+    },
+    {
+      "id": "automated_doc_generation",
+      "name": "Docs generated",
+      "pillar": "docs",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Some docs are generated from source and kept in sync automatically (TypeDoc, Sphinx autodoc, rustdoc/godoc published, OpenAPI generation in CI, docs site build).",
+      "fix": "Generate API/reference docs in CI."
+    },
+    {
+      "id": "agents_md_validation",
+      "name": "Agent instructions verified",
+      "pillar": "docs",
+      "level": 5,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Something checks that the agent instructions stay true: a CI job that runs the documented commands, an automated AGENTS.md updater, or a scheduled agent that refreshes it.",
+      "fix": "Add a CI job that executes the commands listed in AGENTS.md."
+    },
+    {
+      "id": "env_template",
+      "name": "Env template",
+      "pillar": "devenv",
+      "level": 2,
+      "scope": "app",
+      "difficulty": "basic",
+      "pass": "Required environment variables are documented in a committed template (.env.example, .env.sample, .env.template) or a documented config section. Skip if the app needs no env configuration.",
+      "fix": "Commit .env.example listing every variable with a safe placeholder and a comment."
+    },
+    {
+      "id": "devcontainer",
+      "name": "Reproducible environment",
+      "pillar": "devenv",
+      "level": 2,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "A reproducible dev environment is defined: .devcontainer/devcontainer.json, Nix flake/shell, devbox.json, or a Dockerfile/compose setup documented for development.",
+      "fix": "Add .devcontainer/devcontainer.json with the toolchain and post-create setup."
+    },
+    {
+      "id": "local_services_setup",
+      "name": "Local services",
+      "pillar": "devenv",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Backing services (DB, cache, queues) can be started locally with one command (docker-compose, Tilt, Skaffold, supabase start, testcontainers). Skip if there are no backing services.",
+      "fix": "Add compose.yaml for the backing services and document `docker compose up`."
+    },
+    {
+      "id": "database_schema",
+      "name": "Schema as code",
+      "pillar": "devenv",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Apps that use a database manage schema as code (migrations dir, Prisma/Drizzle schema, Alembic, Rails/Django migrations, Flyway, Atlas). Skip if there is no database.",
+      "fix": "Adopt a migration tool and commit the schema."
+    },
+    {
+      "id": "devcontainer_runnable",
+      "name": "Environment verified",
+      "pillar": "devenv",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "The reproducible environment is exercised in CI (devcontainers/ci action, Nix build in CI, compose-based test job) so it doesn't rot. Skip if no environment definition exists (devcontainer already fails).",
+      "fix": "Build the devcontainer (or Nix shell) in CI."
+    },
+    {
+      "id": "structured_logging",
+      "name": "Structured logging",
+      "pillar": "observability",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Deployed services log through a structured logger (pino, winston JSON, structlog, zap, slog, tracing, logback JSON) instead of bare print/console.log. Skip for libraries.",
+      "fix": "Adopt a structured logger with request/trace IDs in every line."
+    },
+    {
+      "id": "distributed_tracing",
+      "name": "Tracing",
+      "pillar": "observability",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Services emit traces (OpenTelemetry, Datadog APM, Honeycomb, Sentry performance, X-Ray) with trace context propagated. Skip for libraries/CLIs.",
+      "fix": "Add OpenTelemetry auto-instrumentation and export to your backend."
+    },
+    {
+      "id": "metrics_collection",
+      "name": "Metrics",
+      "pillar": "observability",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Services expose or ship runtime metrics (Prometheus client, StatsD, OpenTelemetry metrics, Datadog, platform analytics). Skip for libraries/CLIs.",
+      "fix": "Expose RED metrics (rate, errors, duration) via OpenTelemetry or Prometheus."
+    },
+    {
+      "id": "error_tracking_contextualized",
+      "name": "Error tracking",
+      "pillar": "observability",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Errors are captured with context (Sentry, Bugsnag, Rollbar, Honeybadger, Datadog error tracking) including release/user/request tags. Skip for libraries.",
+      "fix": "Add Sentry (or equivalent) with release and environment tags."
+    },
+    {
+      "id": "health_checks",
+      "name": "Health checks",
+      "pillar": "observability",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "basic",
+      "pass": "Services expose health/readiness endpoints or probes (/health, /healthz, /ready, k8s probes, platform health checks). Skip for libraries/CLIs/static sites.",
+      "fix": "Add /healthz (liveness) and /readyz (dependencies) endpoints."
+    },
+    {
+      "id": "alerting_configured",
+      "name": "Alerting",
+      "pillar": "observability",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Alert rules are defined as code or documented (Prometheus/Alertmanager rules, Datadog/Grafana monitors-as-code, PagerDuty/Opsgenie integration, Sentry alert rules referenced). Skip for libraries.",
+      "fix": "Define alerts as code for error rate and latency SLOs."
+    },
+    {
+      "id": "deployment_observability",
+      "name": "Deploy observability",
+      "pillar": "observability",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Deploys are visible in monitoring (release markers in Sentry/Datadog, deploy annotations, dashboards linked from docs) so regressions can be tied to a release. Skip for libraries.",
+      "fix": "Send release/deploy markers from the deploy workflow."
+    },
+    {
+      "id": "profiling_instrumentation",
+      "name": "Profiling",
+      "pillar": "observability",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Performance can be profiled in a standard way (pprof endpoints, continuous profiling like Pyroscope/Datadog, documented profiling scripts, benchmark harnesses).",
+      "fix": "Expose pprof/py-spy recipes or enable continuous profiling."
+    },
+    {
+      "id": "runbooks_documented",
+      "name": "Runbooks",
+      "pillar": "observability",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Operational runbooks exist (runbooks/ or docs/ops, incident playbooks, linked from alerts or docs). Skip for libraries.",
+      "fix": "Write runbooks for the top alerts and common incidents."
+    },
+    {
+      "id": "code_quality_metrics",
+      "name": "Code quality metrics",
+      "pillar": "observability",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Code health is measured over time (coverage trend, SonarQube/CodeClimate/Codacy, DeepSource, CI-published quality reports).",
+      "fix": "Publish coverage and lint debt to a dashboard or PR comments."
+    },
+    {
+      "id": "circuit_breakers",
+      "name": "Resilience patterns",
+      "pillar": "observability",
+      "level": 5,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Calls to external dependencies use circuit breakers/bulkheads/timeouts via a library or mesh (opossum, resilience4j, Polly, pybreaker, gobreaker, Istio/Envoy policies). Skip for apps without external dependencies.",
+      "fix": "Wrap outbound calls with timeouts + a circuit breaker library."
+    },
+    {
+      "id": "gitignore_comprehensive",
+      "name": "Comprehensive .gitignore",
+      "pillar": "security",
+      "level": 1,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": ".gitignore excludes secrets (.env, key files), dependency dirs, build output and editor/OS junk for the languages in use, and no such files are tracked.",
+      "fix": "Extend .gitignore from the github/gitignore template for each language; untrack anything sensitive."
+    },
+    {
+      "id": "branch_protection",
+      "name": "Branch protection",
+      "pillar": "security",
+      "level": 2,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "The default branch is protected (branch protection or rulesets requiring PRs/reviews/status checks). Verify with the platform CLI/API when possible.",
+      "fix": "Require PRs and passing checks on the default branch."
+    },
+    {
+      "id": "codeowners",
+      "name": "CODEOWNERS",
+      "pillar": "security",
+      "level": 2,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "A CODEOWNERS file exists (root, .github/ or docs/) assigning owners to paths.",
+      "fix": "Add .github/CODEOWNERS with at least a default owner."
+    },
+    {
+      "id": "secret_scanning",
+      "name": "Secret scanning",
+      "pillar": "security",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "Secrets are scanned for: platform secret scanning/push protection enabled, or gitleaks/trufflehog/detect-secrets in hooks or CI.",
+      "fix": "Enable push protection, or add gitleaks to pre-commit and CI."
+    },
+    {
+      "id": "dependency_update_automation",
+      "name": "Dependency updates automated",
+      "pillar": "security",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "Dependency updates are automated (Dependabot config, Renovate config, or equivalent).",
+      "fix": "Add .github/dependabot.yml or renovate.json."
+    },
+    {
+      "id": "secrets_management",
+      "name": "Secrets management",
+      "pillar": "security",
+      "level": 3,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "Runtime secrets come from a manager or platform store (env injected by platform, Vault, AWS/GCP/Azure secret managers, Doppler, 1Password, SOPS) and no secrets are hardcoded in source.",
+      "fix": "Move secrets to the platform's secret store; read them from env at runtime."
+    },
+    {
+      "id": "log_scrubbing",
+      "name": "Log scrubbing",
+      "pillar": "security",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Logs redact sensitive fields (logger redact config, scrubbing processors, Sentry beforeSend scrubbing). Skip for libraries and CLIs.",
+      "fix": "Configure logger redaction paths for tokens, passwords and PII."
+    },
+    {
+      "id": "pii_handling",
+      "name": "PII handling",
+      "pillar": "security",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Apps that handle personal data have an explicit approach (data classification, PII-tagged fields, encryption at rest for sensitive columns, documented retention). Skip if no personal data.",
+      "fix": "Document which fields are PII and how they're protected and retained."
+    },
+    {
+      "id": "automated_security_review",
+      "name": "Static security analysis",
+      "pillar": "security",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Application source or dependencies are scanned for vulnerabilities on PRs (CodeQL, Semgrep, Snyk, SonarQube security, Bandit, gosec, npm/pip/cargo audit, osv-scanner). Linters that only scan CI workflow files (e.g. zizmor, actionlint) don't count.",
+      "fix": "Enable CodeQL or add Semgrep to CI."
+    },
+    {
+      "id": "dast_scanning",
+      "name": "Dynamic security testing",
+      "pillar": "security",
+      "level": 5,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "Running web apps are scanned dynamically (OWASP ZAP, Burp, Nuclei, StackHawk) in CI or on a schedule. Skip for non-web apps.",
+      "fix": "Run a ZAP baseline scan against a preview deployment."
+    },
+    {
+      "id": "privacy_compliance",
+      "name": "Privacy compliance",
+      "pillar": "security",
+      "level": 5,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "User-facing products that collect personal data have privacy controls in code (consent management, data export/deletion paths, documented DPA/GDPR handling). Skip otherwise.",
+      "fix": "Implement data export/deletion flows and consent handling."
+    },
+    {
+      "id": "issue_templates",
+      "name": "Issue templates",
+      "pillar": "tasks",
+      "level": 2,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "Issue templates or forms exist (.github/ISSUE_TEMPLATE/, .gitlab/issue_templates/).",
+      "fix": "Add bug and feature templates that ask for repro steps and acceptance criteria."
+    },
+    {
+      "id": "pr_templates",
+      "name": "PR template",
+      "pillar": "tasks",
+      "level": 2,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "A pull/merge request template exists (pull_request_template.md in root, .github/ or docs/; .gitlab/merge_request_templates/).",
+      "fix": "Add .github/pull_request_template.md with summary, testing and risk sections."
+    },
+    {
+      "id": "issue_labeling_system",
+      "name": "Issue labels",
+      "pillar": "tasks",
+      "level": 3,
+      "scope": "repo",
+      "difficulty": "basic",
+      "pass": "Issues use a deliberate label taxonomy beyond the platform defaults (type, area, priority), visible via the platform CLI/API or a labels config file.",
+      "fix": "Define type/area/priority labels (labels-as-code if possible)."
+    },
+    {
+      "id": "backlog_health",
+      "name": "Healthy backlog",
+      "pillar": "tasks",
+      "level": 4,
+      "scope": "repo",
+      "difficulty": "intermediate",
+      "pass": "Open issues are descriptive and triaged: clear titles, bodies with context, labels applied, stale issues closed. Skip if the repo doesn't use an issue tracker visible to the agent.",
+      "fix": "Triage the backlog; add a stale bot and require labels."
+    },
+    {
+      "id": "product_analytics_instrumentation",
+      "name": "Product analytics",
+      "pillar": "product",
+      "level": 4,
+      "scope": "app",
+      "difficulty": "intermediate",
+      "pass": "User-facing apps instrument product events (PostHog, Amplitude, Mixpanel, Segment, GA4, Plausible, Vercel Analytics). Skip for libraries, CLIs and internal infrastructure.",
+      "fix": "Add an analytics SDK and track the core activation events."
+    },
+    {
+      "id": "experimentation_infrastructure",
+      "name": "Experimentation",
+      "pillar": "product",
+      "level": 5,
+      "scope": "app",
+      "difficulty": "advanced",
+      "pass": "User-facing apps can run A/B tests or experiments (GrowthBook, Statsig, Optimizely, PostHog experiments, LaunchDarkly experiments). Skip for libraries, CLIs and infrastructure.",
+      "fix": "Use the flag provider's experiments feature for the next feature launch."
+    },
+    {
+      "id": "error_to_insight_pipeline",
+      "name": "Errors become tasks",
+      "pillar": "product",
+      "level": 5,
+      "scope": "repo",
+      "difficulty": "advanced",
+      "pass": "Production errors or user feedback flow automatically into the task tracker (Sentry/Bugsnag-to-issue integration, feedback-to-issue automation, an agent that files issues from alerts).",
+      "fix": "Connect error tracking to the issue tracker so new error groups open issues."
+    }
+  ]
+}

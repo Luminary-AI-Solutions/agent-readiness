@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.DS_Store
+.idea/
+.vscode/
+
+# readiness runs against this repo itself
+.agent-readiness/draft.json
+.agent-readiness/decisions.json

@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Readiness · fastapi</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #ebeae5;
+  --surface: #f4f3ef;
+  --text: #161718;
+  --text-2: #4b4f52;
+  --muted: #74787a;
+  --rule: rgba(22, 23, 24, .14);
+  --rule-strong: rgba(22, 23, 24, .32);
+  --bar: #56697a;
+  --track: rgba(22, 23, 24, .08);
+  --slate: #8796a3;
+  --ink: #1b1d1e;
+  --sand: #b5ad90;
+  --good: #0ca30c;
+  --critical: #d03b3b;
+  --tip-bg: #161718;
+  --tip-text: #f2f1ec;
+  --sans: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #222527;
+    --surface: #2a2d30;
+    --text: #edece7;
+    --text-2: #b1b4b3;
+    --muted: #868a8b;
+    --rule: rgba(237, 236, 231, .12);
+    --rule-strong: rgba(237, 236, 231, .3);
+    --bar: #9aabb8;
+    --track: rgba(237, 236, 231, .08);
+    --ink: #141617;
+    --tip-bg: #edece7;
+    --tip-text: #161718;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #222527;
+  --surface: #2a2d30;
+  --text: #edece7;
+  --text-2: #b1b4b3;
+  --muted: #868a8b;
+  --rule: rgba(237, 236, 231, .12);
+  --rule-strong: rgba(237, 236, 231, .3);
+  --bar: #9aabb8;
+  --track: rgba(237, 236, 231, .08);
+  --ink: #141617;
+  --tip-bg: #edece7;
+  --tip-text: #161718;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 400 14px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 64px; }
+button, input, select { font: inherit; color: inherit; }
+.mono { font-family: var(--mono); font-size: 12px; }
+
+/* top bar */
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 22px 0 18px; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.brand { font-weight: 500; letter-spacing: -.01em; }
+.brand span { color: var(--muted); font-weight: 400; }
+.meta { display: flex; gap: 18px; color: var(--muted); font-size: 12px; align-items: center; flex-wrap: wrap; }
+.meta b { color: var(--text-2); font-weight: 500; }
+.toggle { background: none; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 3px 12px; cursor: pointer; font-size: 12px; color: var(--text-2); }
+.toggle:hover { border-color: var(--text-2); }
+
+/* triptych */
+.trip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 28px; margin: 28px 0 8px; background: #4b5154; border-radius: 4px; }
+.panel { position: relative; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 2px; }
+.panel svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.p-grid { background: var(--slate); color: #fff; }
+.p-ink { background: var(--ink); color: #fff; }
+.p-sand { background: var(--sand); color: #1b1d1e; }
+.p-sand .lede { position: absolute; top: 4.5%; left: 6%; right: 6%; margin: 0; font-size: clamp(11px, 1.15vw, 14px); line-height: 1.3; font-weight: 500; letter-spacing: -.005em; }
+.cell { transition: fill-opacity .12s; }
+.cell:hover, .arc:hover { stroke-width: 2.4; }
+.arc { cursor: default; }
+.caption { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; color: var(--muted); font-size: 11px; padding: 0 28px; margin-bottom: 40px; }
+
+/* sections */
+section { border-top: 1px solid var(--rule); padding: 28px 0 36px; display: grid; grid-template-columns: 220px 1fr; gap: 24px; }
+.sec-h { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+.sec-h b { display: block; color: var(--text); font-size: 15px; font-weight: 500; letter-spacing: -.01em; margin-top: 4px; }
+.sec-h p { margin: 10px 0 0; font-size: 12px; line-height: 1.5; max-width: 200px; }
+
+.levels { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--rule); }
+.lv { padding: 16px 14px 14px; border-right: 1px solid var(--rule); min-width: 0; }
+.lv:last-child { border-right: 0; }
+.lv .n { font-family: var(--mono); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+.lv .name { font-weight: 500; margin: 2px 0 14px; letter-spacing: -.01em; }
+.lv .v { font-size: 28px; font-weight: 500; letter-spacing: -.03em; line-height: 1; }
+.lv .v small { font-size: 12px; color: var(--muted); font-weight: 400; letter-spacing: 0; margin-left: 4px; }
+.lv.locked .v, .lv.locked .name { color: var(--muted); }
+.lv.current { background: var(--surface); }
+.track { position: relative; height: 6px; background: var(--track); border-radius: 0 4px 4px 0; margin: 12px 0 8px; }
+.track .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--bar); border-radius: 0 4px 4px 0; }
+.track .tick { position: absolute; top: -4px; bottom: -4px; width: 1px; background: var(--text); }
+.lv .state { font-size: 11px; color: var(--text-2); }
+
+.pillars { display: grid; gap: 2px; }
+.pr { display: grid; grid-template-columns: 200px 1fr 92px; align-items: center; gap: 16px; padding: 7px 0; border-bottom: 1px solid var(--rule); cursor: default; }
+.pr:last-child { border-bottom: 0; }
+.pr .label { font-weight: 500; font-size: 13px; }
+.pr .why { display: none; }
+.pr .track { margin: 0; height: 8px; }
+.pr .val { text-align: right; font-size: 12px; color: var(--text-2); }
+.pr:hover .label { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+.actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--rule); }
+.act { padding: 18px 16px; border-right: 1px solid var(--rule); min-width: 0; }
+.act:last-child { border-right: 0; }
+.act .i { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.act h3 { font-size: 15px; font-weight: 500; margin: 6px 0 2px; letter-spacing: -.01em; }
+.act code { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.act p { margin: 10px 0 0; font-size: 13px; color: var(--text-2); }
+.act .now { font-size: 12px; color: var(--muted); }
+
+.trend { position: relative; }
+.trend svg { width: 100%; height: auto; display: block; overflow: visible; }
+.empty { color: var(--muted); font-size: 13px; padding: 12px 0; }
+
+/* criteria explorer */
+.filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
+.seg button { background: none; border: 0; padding: 4px 12px; cursor: pointer; font-size: 12px; color: var(--text-2); }
+.seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+.filters select, .filters input { background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 999px; padding: 4px 12px; font-size: 12px; }
+.filters input { flex: 1; min-width: 160px; }
+.count { color: var(--muted); font-size: 12px; margin-left: auto; }
+details.grp { border-top: 1px solid var(--rule); }
+details.grp > summary { list-style: none; cursor: pointer; padding: 12px 0; display: flex; align-items: baseline; gap: 12px; }
+details.grp > summary::-webkit-details-marker { display: none; }
+details.grp > summary .lvn { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 22px; }
+details.grp > summary .t { font-weight: 500; }
+details.grp > summary .s { color: var(--muted); font-size: 12px; margin-left: auto; }
+details.grp > summary::after { content: "+"; font-family: var(--mono); color: var(--muted); width: 14px; text-align: right; }
+details.grp[open] > summary::after { content: "–"; }
+.crit { display: grid; grid-template-columns: 64px 1fr 150px 44px; gap: 14px; padding: 10px 0 10px 34px; border-top: 1px dashed var(--rule); align-items: baseline; cursor: pointer; }
+.crit:hover { background: linear-gradient(90deg, transparent, var(--track) 30%, var(--track) 70%, transparent); }
+.st { font-size: 11px; display: inline-flex; gap: 5px; align-items: center; color: var(--text-2); }
+.st i { font-style: normal; width: 14px; height: 14px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 9px; color: #fff; font-weight: 700; flex: none; }
+.st.pass i { background: var(--good); }
+.st.fail i { background: var(--critical); }
+.st.review i { background: transparent; border: 1px solid var(--text-2); color: var(--text-2); }
+.st.skip i { background: transparent; border: 1px dashed var(--muted); color: var(--muted); }
+.crit .nm { font-weight: 500; font-size: 13px; }
+.crit .id { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: 8px; }
+.crit .ra { color: var(--text-2); font-size: 12.5px; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.crit.open .ra { -webkit-line-clamp: unset; }
+.crit .pl { font-size: 12px; color: var(--muted); }
+.crit .sc { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--text-2); }
+.crit .more { display: none; grid-column: 2 / -1; font-size: 12.5px; color: var(--text-2); }
+.crit.open .more { display: block; }
+.more dl { display: grid; grid-template-columns: 70px 1fr; gap: 6px 12px; margin: 8px 0 0; }
+.more dt { color: var(--muted); font-size: 11px; padding-top: 1px; }
+.more dd { margin: 0; }
+.more ul { margin: 0; padding: 0; list-style: none; }
+.more li { padding: 2px 0; }
+.more li .mono { color: var(--text); }
+
+.apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0; border: 1px solid var(--rule); }
+.app { padding: 14px 16px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); margin: 0 -1px -1px 0; }
+.app .mono { color: var(--text); }
+.app p { margin: 6px 0 0; color: var(--text-2); font-size: 12.5px; }
+.app .k { color: var(--muted); font-size: 11px; }
+
+footer { border-top: 1px solid var(--rule); padding-top: 20px; color: var(--muted); font-size: 12px; display: grid; grid-template-columns: 220px 1fr; gap: 24px; }
+footer p { margin: 0 0 8px; max-width: 70ch; }
+footer a { color: var(--text-2); }
+.banner { color: var(--text-2); padding: 12px 0 0; font-size: 12.5px; display: flex; gap: 8px; align-items: baseline; }
+.banner::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--critical); flex: none; transform: translateY(-1px); }
+
+#tip { position: fixed; pointer-events: none; z-index: 10; background: var(--tip-bg); color: var(--tip-text); padding: 8px 10px; border-radius: 4px; font-size: 12px; line-height: 1.4; max-width: 280px; opacity: 0; transition: opacity .08s; }
+#tip b { font-weight: 600; }
+#tip .m { opacity: .7; font-family: var(--mono); font-size: 11px; }
+
+@media (max-width: 980px) {
+  .trip { grid-template-columns: 1fr; padding: 16px; }
+  .panel { aspect-ratio: 4 / 5; }
+  .p-sand .lede { font-size: 15px; }
+  .caption { grid-template-columns: 1fr; padding: 0 2px; gap: 4px; }
+  section, footer { grid-template-columns: 1fr; gap: 14px; }
+  .sec-h p { max-width: none; }
+  .levels { grid-template-columns: 1fr; }
+  .lv { border-right: 0; border-bottom: 1px solid var(--rule); }
+  .actions { grid-template-columns: 1fr; }
+  .act { border-right: 0; border-bottom: 1px solid var(--rule); }
+}
+@media (max-width: 640px) {
+  .wrap { padding: 0 16px 48px; }
+  .pr { grid-template-columns: 1fr 72px; }
+  .pr .track { grid-column: 1 / -1; grid-row: 2; }
+  .crit { grid-template-columns: 1fr 44px; padding-left: 0; }
+  .crit .st { grid-column: 1 / -1; }
+  .crit .pl { display: none; }
+  .crit .more { grid-column: 1 / -1; }
+}
+@media print {
+  .toggle, .filters { display: none; }
+  details.grp { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Agent Readiness <span id="repoName"></span></div>
+    <div class="meta" id="meta"></div>
+  </header>
+  <div id="banner"></div>
+
+  <div class="trip" aria-label="Readiness overview">
+    <div class="panel p-grid" id="pGrid" role="img"></div>
+    <div class="panel p-ink" id="pInk" role="img"></div>
+    <div class="panel p-sand" id="pSand">
+      <p class="lede" id="lede"></p>
+    </div>
+  </div>
+  <div class="caption">
+    <span>Every criterion, in columns for Levels 1 to 5. Filled cells pass.</span>
+    <span>The level staircase. Unlocked levels are white and locked levels are dimmed.</span>
+    <span>One ring per pillar, inner to outer. Dark arcs pass, faint arcs fail, and gaps are skipped.</span>
+  </div>
+
+  <section>
+    <div class="sec-h">01<b>Levels</b><p>Each level unlocks when 80% of the previous level's applicable criteria pass. Skipped criteria don't count.</p></div>
+    <div class="levels" id="levels"></div>
+  </section>
+
+  <section>
+    <div class="sec-h">02<b>Pillars</b><p>Pass rate across all levels for each technical pillar. Hover a row to see why it matters.</p></div>
+    <div class="pillars" id="pillars"></div>
+  </section>
+
+  <section>
+    <div class="sec-h">03<b>Next steps</b><p>The highest-impact gaps for reaching the next level.</p></div>
+    <div class="actions" id="actions"></div>
+  </section>
+
+  <section>
+    <div class="sec-h">04<b>Trend</b><p>Overall pass rate per run. Labels mark level changes.</p></div>
+    <div class="trend" id="trend"></div>
+  </section>
+
+  <section>
+    <div class="sec-h">05<b>Criteria</b><p>Every criterion with its evidence. Click a row for per-app results, the pass rule and a suggested fix.</p></div>
+    <div>
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Status filter" id="segStatus"></div>
+        <select id="fPillar" aria-label="Pillar"></select>
+        <input id="fSearch" type="search" placeholder="Search criteria or evidence" aria-label="Search">
+        <span class="count" id="count"></span>
+      </div>
+      <div id="criteria"></div>
+    </div>
+  </section>
+
+  <section id="appsSec" hidden>
+    <div class="sec-h">06<b>Applications</b><p>Deployable units in this monorepo. App-scoped criteria score as passing apps / evaluated apps.</p></div>
+    <div class="apps" id="apps"></div>
+  </section>
+
+  <footer>
+    <div>Method</div>
+    <div id="foot"></div>
+  </footer>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script id="data" type="application/json">{"report":{"schema_version":1,"status":"final","repo":{"name":"fastapi","url":"https://github.com/fastapi/fastapi.git","commit":"45cb2252c737906f37544f5ba6bee0295fb81468","branch":"master","has_local_changes":false,"has_unpushed_commits":false},"generated_at":"2026-11-01T02:39:09+00:00","evaluator":{"harness":"claude-code","model":"claude-opus-5-5","skill_version":"0.1.0"},"languages":["Python"],"monorepo":{"tool":null,"app_count":1,"truncated":false,"excluded":[]},"apps":{".":{"description":"FastAPI framework, high performance, easy to learn, fast to code, ready for production","languages":["Python"],"kind":"library"}},"criteria":{"lint_config":{"status":"pass","numerator":1,"denominator":1,"rationale":"Linter configured: [tool.ruff, flake8","apps":{".":{"status":"pass","rationale":"Linter configured: [tool.ruff, flake8"}},"source":"scan","previous":{"status":"pass","rationale":"Linter configured: [tool.ruff, flake8"}},"type_check":{"status":"pass","numerator":1,"denominator":1,"rationale":"Type checking configured: [tool.mypy, mypy, ty>","apps":{".":{"status":"pass","rationale":"Type checking configured: [tool.mypy, mypy, ty>"}},"source":"scan","previous":{"status":"pass","rationale":"Type checking configured: [tool.mypy, mypy, ty>"}},"formatter":{"status":"pass","numerator":1,"denominator":1,"rationale":"Formatter available: black, .pre-commit-config.yaml (ruff format)","apps":{".":{"status":"pass","rationale":"Formatter available: black, .pre-commit-config.yaml (ruff format)"}},"source":"scan","previous":{"status":"pass","rationale":"Formatter available: black, .pre-commit-config.yaml (ruff format)"}},"strict_typing":{"status":"pass","numerator":1,"denominator":1,"rationale":"mypy/pyright strict","apps":{".":{"status":"pass","rationale":"mypy/pyright strict"}},"source":"scan","previous":{"status":"pass","rationale":"mypy/pyright strict"}},"pre_commit_hooks":{"status":"pass","numerator":1,"denominator":1,"rationale":"Commit hooks configured: .pre-commit-config.yaml","source":"scan","previous":{"status":"pass","rationale":"Commit hooks configured: .pre-commit-config.yaml"}},"naming_consistency":{"status":"fail","numerator":0,"denominator":1,"rationale":"Ruff selects E,W,F,I,B,C4,UP only (no pep8-naming N rules) and the in-repo contributing.md is a 7-line stub linking to tiangolo.com; no committed naming rules","apps":{".":{"status":"fail","rationale":"Ruff selects E,W,F,I,B,C4,UP only (no pep8-naming N rules) and the in-repo contributing.md is a 7-line stub linking to tiangolo.com; no committed naming rules"}},"source":"agent","previous":{"status":"fail","rationale":"No explicit naming rules found; judge whether conventions are evident and consistent"}},"large_file_detection":{"status":"pass","numerator":1,"denominator":1,"rationale":"Large-file guard present: .pre-commit-config.yaml (check-added-large-files)","source":"scan","previous":{"status":"pass","rationale":"Large-file guard present: .pre-commit-config.yaml (check-added-large-files)"}},"tech_debt_tracking":{"status":"fail","numerator":0,"denominator":1,"rationale":"No TODO/FIXME tracking rule or scanner (10 source files contain TODO/FIXME markers)","source":"scan","previous":{"status":"fail","rationale":"No TODO/FIXME tracking rule or scanner (10 source files contain TODO/FIXME markers)"}},"dead_code_detection":{"status":"fail","numerator":0,"denominator":1,"rationale":"No dead code detector found","apps":{".":{"status":"fail","rationale":"No dead code detector found"}},"source":"scan","previous":{"status":"fail","rationale":"No dead code detector found"}},"duplicate_code_detection":{"status":"fail","numerator":0,"denominator":1,"rationale":"No copy-paste detection found","source":"scan","previous":{"status":"fail","rationale":"No copy-paste detection found"}},"cyclomatic_complexity":{"status":"fail","numerator":0,"denominator":1,"rationale":"Scanner matched C901 in pyproject.toml, but it is in [tool.ruff.lint] ignore (\"C901, too complex\"); no other complexity limit","apps":{".":{"status":"fail","rationale":"Scanner matched C901 in pyproject.toml, but it is in [tool.ruff.lint] ignore (\"C901, too complex\"); no other complexity limit"}},"source":"agent","previous":{"status":"fail","rationale":"Complexity limits configured: pyproject.toml (C901)"}},"code_modularization":{"status":"fail","numerator":0,"denominator":1,"rationale":"No import-linter or other boundary tooling; underscore-private modules (fastapi/_compat) are convention only","apps":{".":{"status":"fail","rationale":"No import-linter or other boundary tooling; underscore-private modules (fastapi/_compat) are convention only"}},"source":"agent","previous":{"status":"fail","rationale":"No boundary-enforcement tooling found; check for deliberate structure (e.g. Go internal/)"}},"n_plus_one_detection":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library: fastapi/ has no database access; SQLModel/SQLite appear only in docs_src tutorials and their tests","apps":{".":{"status":"skip","rationale":"Library: fastapi/ has no database access; SQLModel/SQLite appear only in docs_src tutorials and their tests"}},"source":"agent","previous":{"status":"skip","rationale":"Database access detected but no N+1 query detection"}},"build_cmd_doc":{"status":"pass","numerator":1,"denominator":1,"rationale":"README only covers end-user install (uv add fastapi), but dev commands are exposed as scripts/test.sh, scripts/lint.sh, scripts/format.sh with uv.lock + dependency-groups; contributor guide itself lives off-repo","apps":{".":{"status":"pass","rationale":"README only covers end-user install (uv add fastapi), but dev commands are exposed as scripts/test.sh, scripts/lint.sh, scripts/format.sh with uv.lock + dependency-groups; contributor guide itself lives off-repo"}},"source":"agent","previous":{"status":"pass","rationale":"Build/run commands documented in README.md"}},"deps_pinned":{"status":"pass","numerator":1,"denominator":1,"rationale":"Lockfiles committed: uv.lock","apps":{".":{"status":"pass","rationale":"Lockfiles committed: uv.lock"}},"source":"scan","previous":{"status":"pass","rationale":"Lockfiles committed: uv.lock"}},"vcs_cli_tools":{"status":"pass","numerator":1,"denominator":1,"rationale":"gh installed and authenticated","source":"scan","previous":{"status":"pass","rationale":"gh installed and authenticated"}},"single_command_setup":{"status":"fail","numerator":0,"denominator":1,"rationale":"No setup script/Makefile target and no committed doc giving a bootstrap command; docs/en/docs/contributing.md defers to an external tiangolo.com page","source":"agent","previous":{"status":"fail","rationale":"No setup script/Makefile target and no committed doc giving a bootstrap command; docs/en/docs/contributing.md defers to an external tiangolo.com page"}},"agentic_development":{"status":"pass","numerator":1,"denominator":1,"rationale":"Scanner's evidence (fastapi/.agents) is a shipped user skill, but scripts/translate.py runs a pydantic-ai Agent on a schedule (translate.yml) that opens PRs via pr-submit[bot], e.g. #16497-#16501","source":"agent","previous":{"status":"pass","rationale":"Scanner's evidence (fastapi/.agents) is a shipped user skill, but scripts/translate.py runs a pydantic-ai Agent on a schedule (translate.yml) that opens PRs via pr-submit[bot], e.g. #16497-#16501"}},"automated_pr_review":{"status":"pass","numerator":1,"denominator":1,"rationale":"Scanner matched 'danger' in zizmor 'dangerous-triggers' comments (false evidence), but policy bots do comment on PRs: guard-dependencies.yml comments and closes, detect-conflicts.yml comments, latest-changes/label is a required check","source":"agent","previous":{"status":"pass","rationale":"Scanner matched 'danger' in zizmor 'dangerous-triggers' comments (false evidence), but policy bots do comment on PRs: guard-dependencies.yml comments and closes, detect-conflicts.yml comments, latest-changes/label is a required check"}},"release_automation":{"status":"pass","numerator":1,"denominator":1,"rationale":"Release/deploy automation: .github/workflows/create-draft-release.yml, .github/workflows/deploy-docs.yml, .github/workflows/prepare-release.yml (+5 more)","source":"scan","previous":{"status":"pass","rationale":"Release/deploy automation: .github/workflows/create-draft-release.yml, .github/workflows/deploy-docs.yml, .github/workflows/prepare-release.yml (+5 more)"}},"monorepo_tooling":{"status":"skip","numerator":0,"denominator":0,"rationale":"Single-application repository","source":"scan","previous":{"status":"skip","rationale":"Single-application repository"}},"unused_dependencies_detection":{"status":"fail","numerator":0,"denominator":1,"rationale":"No unused-dependency check found","apps":{".":{"status":"fail","rationale":"No unused-dependency check found"}},"source":"scan","previous":{"status":"fail","rationale":"No unused-dependency check found"}},"fast_ci_feedback":{"status":"pass","numerator":1,"denominator":1,"rationale":"Test workflow on PRs: median 6.2 min across 20 recent runs (max 9.9); scanner's 1.6 min mixes in trivial workflows","source":"agent","previous":{"status":"pass","rationale":"Test workflow on PRs: median 6.2 min across 20 recent runs (max 9.9); scanner's 1.6 min mixes in trivial workflows"}},"deployment_frequency":{"status":"pass","numerator":1,"denominator":1,"rationale":"42 tags/releases in the last 90 days","source":"scan","previous":{"status":"pass","rationale":"42 tags/releases in the last 90 days"}},"build_performance_tracking":{"status":"pass","numerator":1,"denominator":1,"rationale":"setup-uv enable-cache keyed on uv.lock in test/build-docs/publish workflows plus a paths-filter job; only dependency caching, nothing measures build time","source":"agent","previous":{"status":"pass","rationale":"setup-uv enable-cache keyed on uv.lock in test/build-docs/publish workflows plus a paths-filter job; only dependency caching, nothing measures build time"}},"release_notes_automation":{"status":"pass","numerator":1,"denominator":1,"rationale":"latest-changes[bot] writes PR titles into docs/en/docs/release-notes.md on merge (81 of the last 400 commits, .github/latest-changes.yml) and create-draft-release.yml builds notes via scripts/prepare_release.py","source":"agent","previous":{"status":"pass","rationale":"latest-changes[bot] writes PR titles into docs/en/docs/release-notes.md on merge (81 of the last 400 commits, .github/latest-changes.yml) and create-draft-release.yml builds notes via scripts/prepare_release.py"}},"feature_flag_infrastructure":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library published to PyPI; no deployed app","apps":{".":{"status":"skip","rationale":"Library published to PyPI; no deployed app"}},"source":"agent","previous":{"status":"skip","rationale":"No feature flag system found"}},"heavy_dependency_detection":{"status":"skip","numerator":0,"denominator":0,"rationale":"No bundler detected; bundle size not applicable","apps":{".":{"status":"skip","rationale":"No bundler detected; bundle size not applicable"}},"source":"scan","previous":{"status":"skip","rationale":"No bundler detected; bundle size not applicable"}},"version_drift_detection":{"status":"skip","numerator":0,"denominator":0,"rationale":"Single-application repository","source":"scan","previous":{"status":"skip","rationale":"Single-application repository"}},"progressive_rollout":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library released to PyPI; no deploy target to roll out","source":"agent","previous":{"status":"skip","rationale":"Library released to PyPI; no deploy target to roll out"}},"rollback_automation":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library; scanner's evidence was the word 'rollback' in DB-dependency tutorials, not a deploy rollback","source":"agent","previous":{"status":"skip","rationale":"Library; scanner's evidence was the word 'rollback' in DB-dependency tutorials, not a deploy rollback"}},"dead_feature_flag_detection":{"status":"skip","numerator":0,"denominator":0,"rationale":"No feature flag system (library)","source":"agent","previous":{"status":"skip","rationale":"No feature flag system (library)"}},"unit_tests_exist":{"status":"pass","numerator":1,"denominator":1,"rationale":"666 test files (e.g. docs_src/app_testing/app_a_py310/test_main.py, docs_src/app_testing/app_b_an_py310/test_main.py (+664 more))","apps":{".":{"status":"pass","rationale":"666 test files (e.g. docs_src/app_testing/app_a_py310/test_main.py, docs_src/app_testing/app_b_an_py310/test_main.py (+664 more))"}},"source":"scan","previous":{"status":"pass","rationale":"666 test files (e.g. docs_src/app_testing/app_a_py310/test_main.py, docs_src/app_testing/app_b_an_py310/test_main.py (+664 more))"}},"unit_tests_runnable":{"status":"pass","numerator":1,"denominator":1,"rationale":"scripts/test.sh runs `pytest -n auto --dist loadgroup tests scripts/tests/` with PYTHONPATH set, no credentials needed (it is not documented in README as the scanner claimed)","apps":{".":{"status":"pass","rationale":"scripts/test.sh runs `pytest -n auto --dist loadgroup tests scripts/tests/` with PYTHONPATH set, no credentials needed (it is not documented in README as the scanner claimed)"}},"source":"agent","previous":{"status":"pass","rationale":"Test command: pytest, documented in README/agent docs"}},"test_naming_conventions":{"status":"pass","numerator":1,"denominator":1,"rationale":"Tests follow recognized patterns (666 files)","apps":{".":{"status":"pass","rationale":"Tests follow recognized patterns (666 files)"}},"source":"scan","previous":{"status":"pass","rationale":"Tests follow recognized patterns (666 files)"}},"integration_tests_exist":{"status":"pass","numerator":1,"denominator":1,"rationale":"tests/test_tutorial/* drive full docs_src apps through TestClient incl. SQLModel+SQLite, GraphQL (strawberry) and WSGI mounting; tests/test_telemetry/test_integrations.py exercises OTel export","apps":{".":{"status":"pass","rationale":"tests/test_tutorial/* drive full docs_src apps through TestClient incl. SQLModel+SQLite, GraphQL (strawberry) and WSGI mounting; tests/test_telemetry/test_integrations.py exercises OTel export"}},"source":"agent","previous":{"status":"pass","rationale":"No integration/E2E suite found by name; check whether any tests cross component boundaries"}},"test_isolation":{"status":"pass","numerator":1,"denominator":1,"rationale":"Parallel-capable test runner: pytest-xdist","apps":{".":{"status":"pass","rationale":"Parallel-capable test runner: pytest-xdist"}},"source":"scan","previous":{"status":"pass","rationale":"Parallel-capable test runner: pytest-xdist"}},"test_coverage_thresholds":{"status":"pass","numerator":1,"denominator":1,"rationale":"Coverage measured/enforced: .github/workflows/smokeshow.yml (COVERAGE_THRESHOLD), docs/en/data/skip_users.yml (codecov)","apps":{".":{"status":"pass","rationale":"Coverage measured/enforced: .github/workflows/smokeshow.yml (COVERAGE_THRESHOLD), docs/en/data/skip_users.yml (codecov)"}},"source":"scan","previous":{"status":"pass","rationale":"Coverage measured/enforced: .github/workflows/smokeshow.yml (COVERAGE_THRESHOLD), docs/en/data/skip_users.yml (codecov)"}},"flaky_test_detection":{"status":"fail","numerator":0,"denominator":1,"rationale":"No flaky-test retry/detection found","source":"scan","previous":{"status":"fail","rationale":"No flaky-test retry/detection found"}},"test_performance_tracking":{"status":"pass","numerator":1,"denominator":1,"rationale":"Test timing/benchmarks tracked: .github/workflows/test.yml (codspeed), .gitignore (codspeed), docs/en/mkdocs.yml (benchmark), pyproject.toml (codspeed)","source":"scan","previous":{"status":"pass","rationale":"Test timing/benchmarks tracked: .github/workflows/test.yml (codspeed), .gitignore (codspeed), docs/en/mkdocs.yml (benchmark), pyproject.toml (codspeed)"}},"readme":{"status":"pass","numerator":1,"denominator":1,"rationale":"README.md (534 lines, 35 headings)","source":"scan","previous":{"status":"pass","rationale":"README.md (534 lines, 35 headings)"}},"agents_md":{"status":"fail","numerator":0,"denominator":1,"rationale":"No AGENTS.md or harness-specific agent instructions","source":"scan","previous":{"status":"fail","rationale":"No AGENTS.md or harness-specific agent instructions"}},"documentation_freshness":{"status":"pass","numerator":1,"denominator":1,"rationale":"README.md updated within 180 days of the latest commit","source":"scan","previous":{"status":"pass","rationale":"README.md updated within 180 days of the latest commit"}},"skills":{"status":"fail","numerator":0,"denominator":1,"rationale":"Only fastapi/.agents/skills/fastapi/SKILL.md, a package-data skill for end users writing FastAPI apps, not at a harness-discovered root path and not about working in this repo","source":"agent","previous":{"status":"fail","rationale":"Only fastapi/.agents/skills/fastapi/SKILL.md, a package-data skill for end users writing FastAPI apps, not at a harness-discovered root path and not about working in this repo"}},"api_schema_docs":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library with no network API of its own; scanner matched the dependency name 'fastapi'","apps":{".":{"status":"skip","rationale":"Library with no network API of its own; scanner matched the dependency name 'fastapi'"}},"source":"agent","previous":{"status":"skip","rationale":"API schema: fastapi"}},"service_flow_documented":{"status":"pass","numerator":1,"denominator":1,"rationale":"English docs include mermaid sequence diagrams of request/dependency flows (docs/en/docs/tutorial/dependencies/dependencies-with-yield.md, advanced/behind-a-proxy.md); no internal ARCHITECTURE.md","source":"agent","previous":{"status":"pass","rationale":"English docs include mermaid sequence diagrams of request/dependency flows (docs/en/docs/tutorial/dependencies/dependencies-with-yield.md, advanced/behind-a-proxy.md); no internal ARCHITECTURE.md"}},"automated_doc_generation":{"status":"pass","numerator":1,"denominator":1,"rationale":"Docs generated from source: docs/en/mkdocs.yml, docs/hi/mkdocs.yml","source":"scan","previous":{"status":"pass","rationale":"Docs generated from source: docs/en/mkdocs.yml, docs/hi/mkdocs.yml"}},"agents_md_validation":{"status":"fail","numerator":0,"denominator":1,"rationale":"Nothing verifies agent instructions stay accurate","source":"scan","previous":{"status":"fail","rationale":"Nothing verifies agent instructions stay accurate"}},"env_template":{"status":"pass","numerator":1,"denominator":1,"rationale":"Env vars the code reads (FASTAPI_OTEL_AUTO_CONFIGURE, OTEL_EXPORTER_OTLP_*, FASTAPI_ENV) are documented in docs/en/docs/advanced/opentelemetry.md and fastapi-cli.md; none are required for development","apps":{".":{"status":"pass","rationale":"Env vars the code reads (FASTAPI_OTEL_AUTO_CONFIGURE, OTEL_EXPORTER_OTLP_*, FASTAPI_ENV) are documented in docs/en/docs/advanced/opentelemetry.md and fastapi-cli.md; none are required for development"}},"source":"agent","previous":{"status":"pass","rationale":"Reads environment variables (fastapi/applications.py, fastapi/routing.py (+4 more)) but no .env template"}},"devcontainer":{"status":"fail","numerator":0,"denominator":1,"rationale":"No devcontainer, Nix, devbox or dev Dockerfile","source":"scan","previous":{"status":"fail","rationale":"No devcontainer, Nix, devbox or dev Dockerfile"}},"local_services_setup":{"status":"skip","numerator":0,"denominator":0,"rationale":"No backing services; tests use in-memory SQLite (sqlite://)","source":"agent","previous":{"status":"skip","rationale":"No backing services; tests use in-memory SQLite (sqlite://)"}},"database_schema":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library has no database","apps":{".":{"status":"skip","rationale":"Library has no database"}},"source":"agent","previous":{"status":"skip","rationale":"Database used but no migrations/schema files"}},"devcontainer_runnable":{"status":"skip","numerator":0,"denominator":0,"rationale":"No environment definition to verify (devcontainer criterion fails)","source":"scan","previous":{"status":"skip","rationale":"No environment definition to verify (devcontainer criterion fails)"}},"structured_logging":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library, not a deployed service","apps":{".":{"status":"skip","rationale":"Library, not a deployed service"}},"source":"agent","previous":{"status":"skip","rationale":"No structured logger found"}},"distributed_tracing":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library (criterion skips libraries); FastAPI provides OTel tracing to users but no service of its own emits traces","apps":{".":{"status":"skip","rationale":"Library (criterion skips libraries); FastAPI provides OTel tracing to users but no service of its own emits traces"}},"source":"agent","previous":{"status":"skip","rationale":"Tracing: opentelemetry"}},"metrics_collection":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library, not a deployed service","apps":{".":{"status":"skip","rationale":"Library, not a deployed service"}},"source":"agent","previous":{"status":"skip","rationale":"No metrics found"}},"error_tracking_contextualized":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library; sentry-sdk is only a test dependency for integration tests","apps":{".":{"status":"skip","rationale":"Library; sentry-sdk is only a test dependency for integration tests"}},"source":"agent","previous":{"status":"skip","rationale":"Error tracking: sentry-sdk, sentry"}},"health_checks":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library, no running service","apps":{".":{"status":"skip","rationale":"Library, no running service"}},"source":"agent","previous":{"status":"skip","rationale":"Service without health/readiness endpoints"}},"alerting_configured":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library, nothing in production to alert on","source":"agent","previous":{"status":"skip","rationale":"Library, nothing in production to alert on"}},"deployment_observability":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library, no deploys to monitor","source":"agent","previous":{"status":"skip","rationale":"Library, no deploys to monitor"}},"profiling_instrumentation":{"status":"pass","numerator":1,"denominator":1,"rationale":"CodSpeed benchmark harnesses in tests/benchmarks and tests/memory_benchmarks, run by the benchmark job in test.yml","apps":{".":{"status":"pass","rationale":"CodSpeed benchmark harnesses in tests/benchmarks and tests/memory_benchmarks, run by the benchmark job in test.yml"}},"source":"agent","previous":{"status":"pass","rationale":"No profiling hooks or benchmarks found"}},"runbooks_documented":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library, no operations","source":"agent","previous":{"status":"skip","rationale":"Library, no operations"}},"code_quality_metrics":{"status":"pass","numerator":1,"denominator":1,"rationale":"smokeshow.yml publishes the combined coverage HTML report and a coverage status (threshold 100) for every PR/commit; CodSpeed tracks performance over time","source":"agent","previous":{"status":"pass","rationale":"smokeshow.yml publishes the combined coverage HTML report and a coverage status (threshold 100) for every PR/commit; CodSpeed tracks performance over time"}},"circuit_breakers":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library with no external service calls of its own","apps":{".":{"status":"skip","rationale":"Library with no external service calls of its own"}},"source":"agent","previous":{"status":"skip","rationale":"No circuit breaker found; fail if the app calls external services"}},"gitignore_comprehensive":{"status":"fail","numerator":0,"denominator":1,"rationale":"missing patterns: .env","source":"scan","previous":{"status":"fail","rationale":"missing patterns: .env"}},"branch_protection":{"status":"pass","numerator":1,"denominator":1,"rationale":"Rulesets apply to master: creation, deletion, non_fast_forward, pull_request (+2 more)","source":"scan","previous":{"status":"pass","rationale":"Rulesets apply to master: creation, deletion, non_fast_forward, pull_request (+2 more)"}},"codeowners":{"status":"fail","numerator":0,"denominator":1,"rationale":"No CODEOWNERS file","source":"scan","previous":{"status":"fail","rationale":"No CODEOWNERS file"}},"secret_scanning":{"status":"fail","numerator":0,"denominator":1,"rationale":"No gitleaks/trufflehog/detect-secrets in .pre-commit-config.yaml or workflows; platform setting not visible (security_and_analysis null, secret-scanning API 404) (unverified)","source":"agent","previous":{"status":"fail","rationale":"No gitleaks/trufflehog/detect-secrets in .pre-commit-config.yaml or workflows; platform setting not visible (security_and_analysis null, secret-scanning API 404) (unverified)"}},"dependency_update_automation":{"status":"pass","numerator":1,"denominator":1,"rationale":"Automated dependency updates: .github/dependabot.yml","source":"scan","previous":{"status":"pass","rationale":"Automated dependency updates: .github/dependabot.yml"}},"secrets_management":{"status":"pass","numerator":1,"denominator":1,"rationale":"Secrets read from environment; no hardcoded secrets found","apps":{".":{"status":"pass","rationale":"Secrets read from environment; no hardcoded secrets found"}},"source":"scan","previous":{"status":"pass","rationale":"Secrets read from environment; no hardcoded secrets found"}},"log_scrubbing":{"status":"pass","numerator":1,"denominator":1,"rationale":"Library emits request data into telemetry and redacts sensitive query params (_SENSITIVE_QUERY_PARAMETERS -> REDACTED in fastapi/telemetry/_asgi.py)","apps":{".":{"status":"pass","rationale":"Library emits request data into telemetry and redacts sensitive query params (_SENSITIVE_QUERY_PARAMETERS -> REDACTED in fastapi/telemetry/_asgi.py)"}},"source":"agent","previous":{"status":"pass","rationale":"Redaction/scrubbing: fastapi/telemetry/_api.py"}},"pii_handling":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library stores no personal data","apps":{".":{"status":"skip","rationale":"Library stores no personal data"}},"source":"agent","previous":{"status":"skip","rationale":"Decide whether this app handles personal data; skip if not"}},"automated_security_review":{"status":"fail","numerator":0,"denominator":1,"rationale":"Only zizmor runs on PRs and it scans .github/workflows YAML only; PR check runs show no CodeQL/Semgrep/Bandit for the fastapi/ Python source","source":"agent","previous":{"status":"fail","rationale":"Only zizmor runs on PRs and it scans .github/workflows YAML only; PR check runs show no CodeQL/Semgrep/Bandit for the fastapi/ Python source"}},"dast_scanning":{"status":"skip","numerator":0,"denominator":0,"rationale":"Framework library, not a running web app","apps":{".":{"status":"skip","rationale":"Framework library, not a running web app"}},"source":"agent","previous":{"status":"skip","rationale":"Web app without dynamic security scanning"}},"privacy_compliance":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library collects no personal data","source":"agent","previous":{"status":"skip","rationale":"Library collects no personal data"}},"issue_templates":{"status":"pass","numerator":1,"denominator":1,"rationale":"Issue templates: .github/ISSUE_TEMPLATE/config.yml, .github/ISSUE_TEMPLATE/privileged.yml","source":"scan","previous":{"status":"pass","rationale":"Issue templates: .github/ISSUE_TEMPLATE/config.yml, .github/ISSUE_TEMPLATE/privileged.yml"}},"pr_templates":{"status":"fail","numerator":0,"denominator":1,"rationale":"No pull request template","source":"scan","previous":{"status":"fail","rationale":"No pull request template"}},"issue_labeling_system":{"status":"pass","numerator":1,"denominator":1,"rationale":"72 custom labels (e.g. feature, community-feedback, docs, confirmed, answered (+67 more))","source":"scan","previous":{"status":"pass","rationale":"72 custom labels (e.g. feature, community-feedback, docs, confirmed, answered (+67 more))"}},"backlog_health":{"status":"pass","numerator":1,"denominator":1,"rationale":"Tracker kept clear: the only open issue is the pinned #10370 Roadmap (5.2k-char body; scanner's title-length heuristic missed it); recent issues are triaged and closed, requests go to Discussions","source":"agent","previous":{"status":"pass","rationale":"Tracker kept clear: the only open issue is the pinned #10370 Roadmap (5.2k-char body; scanner's title-length heuristic missed it); recent issues are triaged and closed, requests go to Discussions"}},"product_analytics_instrumentation":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library, not a user-facing app","apps":{".":{"status":"skip","rationale":"Library, not a user-facing app"}},"source":"agent","previous":{"status":"skip","rationale":"User-facing app without product analytics"}},"experimentation_infrastructure":{"status":"skip","numerator":0,"denominator":0,"rationale":"Library, not a user-facing app","apps":{".":{"status":"skip","rationale":"Library, not a user-facing app"}},"source":"agent","previous":{"status":"skip","rationale":"No experimentation/A-B testing infrastructure"}},"error_to_insight_pipeline":{"status":"fail","numerator":0,"denominator":1,"rationale":"No automation turns user feedback (Discussions) or errors into issues; conversion is manual","source":"agent","previous":{"status":"fail","rationale":"No automation turns user feedback (Discussions) or errors into issues; conversion is manual"}}},"action_items":[{"criterion":"agents_md","title":"Add an AGENTS.md with dev commands and conventions","why":"Contributor instructions live off-repo (contributing.md is a 7-line link to tiangolo.com), so agents must reverse-engineer setup from CI YAML; the same gap fails single_command_setup and naming_consistency at Level 2","how":"Commit AGENTS.md giving `uv sync` + `prek install` as the bootstrap, `bash scripts/test.sh`, `bash scripts/lint.sh`, `bash scripts/format.sh`, the 100% coverage rule, the docs_src/tests pairing and naming conventions"},{"criterion":"pr_templates","title":"Add a pull request template","why":"PRs need an emoji-prefixed title and a latest-changes label (a required check), but nothing tells an agent that before it opens one","how":"Add .github/pull_request_template.md covering title format, label, regression test and docs_src example checklist"},{"criterion":"codeowners","title":"Add CODEOWNERS","why":"No path ownership exists, so agents can't tell who reviews fastapi/ versus docs/\u003clang>/ translations","how":"Add .github/CODEOWNERS mapping fastapi/ and tests/ to core maintainers and docs/\u003clang>/ to translation reviewers"}],"previous_report":{"generated_at":"2026-11-01T02:29:16+00:00","commit":"45cb2252c737906f37544f5ba6bee0295fb81468"},"scan_notes":[]},"meta":{"version":1,"threshold":0.8,"levels":[{"level":1,"name":"Functional","summary":"Code runs and basic tooling exists, but setup is manual and validation is thin."},{"level":2,"name":"Documented","summary":"Workflows are written down for humans and agents; local guardrails catch mistakes early."},{"level":3,"name":"Standardized","summary":"Processes are enforced by automation: integration tests, security scanning, observability."},{"level":4,"name":"Optimized","summary":"Feedback loops are fast and measured; quality and delivery are tracked continuously."},{"level":5,"name":"Autonomous","summary":"The system checks and improves itself; agents can take on long-running work end to end."}],"pillars":[{"id":"style","name":"Style & Validation","why":"Linters, type checkers and formatters catch mistakes in seconds, so agents don't burn cycles waiting on CI to find a typo."},{"id":"build","name":"Build System","why":"Deterministic, documented build and release commands let an agent verify its change compiles and ships without guessing flags."},{"id":"testing","name":"Testing","why":"Fast, locally runnable tests are the agent's feedback loop: change, run, read the failure, iterate."},{"id":"docs","name":"Documentation","why":"Written instructions replace tribal knowledge. Agents only know what is discoverable in the repo."},{"id":"devenv","name":"Dev Environment","why":"Reproducible environments remove 'works on my machine' for humans and agents alike."},{"id":"observability","name":"Debugging & Observability","why":"Logs, traces and metrics turn 'it failed' into 'it failed because X was null in Y', which an agent can act on."},{"id":"security","name":"Security & Governance","why":"Agents move fast. Branch protection, secret scanning and ownership rules make sure they move fast safely."},{"id":"tasks","name":"Task Discovery","why":"Structured issues, labels and templates let an agent find, scope and report on work without a human translating."},{"id":"product","name":"Product & Experimentation","why":"Analytics and experiments let an agent see whether a change mattered, not just whether it compiled."}],"criteria":[{"id":"lint_config","name":"Linter configured","pillar":"style","level":1,"scope":"app","difficulty":"basic","pass":"A linter is configured for the app's primary language (ESLint, Biome, Ruff, Flake8, Pylint, golangci-lint, Clippy, RuboCop, Checkstyle, SwiftLint, ktlint, etc.).","fix":"Add the ecosystem-default linter with a committed config and a `lint` script/target."},{"id":"type_check","name":"Type checking","pillar":"style","level":1,"scope":"app","difficulty":"basic","pass":"The language is statically typed (Go, Rust, Java, C#, Kotlin, Swift, C/C++), or a type checker is configured (tsconfig.json, mypy, pyright, Sorbet, etc.).","fix":"Add TypeScript/tsconfig or mypy/pyright with a `typecheck` command."},{"id":"formatter","name":"Code formatter","pillar":"style","level":1,"scope":"app","difficulty":"basic","pass":"An automatic formatter is configured or built into the toolchain and used (Prettier, Biome, Black, Ruff format, gofmt, rustfmt, clang-format, etc.).","fix":"Add the ecosystem formatter with a config file and a `format` command."},{"id":"strict_typing","name":"Strict typing","pillar":"style","level":2,"scope":"app","difficulty":"intermediate","pass":"Type checking runs in strict mode (`strict: true` in tsconfig, mypy `strict = true`, pyright `strict`), or the language is statically typed by default.","fix":"Turn on strict mode; fix or explicitly suppress the resulting errors."},{"id":"pre_commit_hooks","name":"Pre-commit hooks","pillar":"style","level":2,"scope":"repo","difficulty":"basic","pass":"Local hooks run lint/format/type checks before commit (pre-commit, Husky, lefthook, simple-git-hooks, lint-staged, a committed .githooks/ wired via core.hooksPath).","fix":"Add pre-commit/Husky/lefthook running the fast checks on staged files."},{"id":"naming_consistency","name":"Naming conventions","pillar":"style","level":2,"scope":"app","difficulty":"intermediate","pass":"Naming conventions are documented (AGENTS.md, CONTRIBUTING, style guide) or enforced by lint rules (e.g. ESLint naming-convention, pep8-naming).","fix":"Document conventions in AGENTS.md and/or enable a naming lint rule."},{"id":"large_file_detection","name":"Large file guard","pillar":"style","level":3,"scope":"repo","difficulty":"intermediate","pass":"Something prevents large/binary files from landing in git: Git LFS via .gitattributes, a check-added-large-files hook, or a CI size check.","fix":"Add `check-added-large-files` to pre-commit or a CI size check; use LFS for binaries."},{"id":"tech_debt_tracking","name":"Tech debt tracking","pillar":"style","level":3,"scope":"repo","difficulty":"intermediate","pass":"TODO/FIXME comments are tracked or constrained: a lint rule requiring ticket references, a TODO scanner in CI, or a debt register that is maintained.","fix":"Require `TODO(#123)` format via lint rule, or add a TODO scanner to CI."},{"id":"dead_code_detection","name":"Dead code detection","pillar":"style","level":4,"scope":"app","difficulty":"advanced","pass":"A dedicated detector for unused exports, files or functions runs in CI or hooks (knip, ts-prune, vulture, deadcode, unparam). General unused-import/unused-variable lint rules don't count on their own.","fix":"Add knip/vulture/deadcode to CI."},{"id":"duplicate_code_detection","name":"Duplicate code detection","pillar":"style","level":4,"scope":"repo","difficulty":"advanced","pass":"Copy-paste detection runs in CI (jscpd, PMD CPD, SonarQube duplication gate, etc.).","fix":"Add jscpd (or the ecosystem equivalent) with a threshold in CI."},{"id":"cyclomatic_complexity","name":"Complexity limits","pillar":"style","level":4,"scope":"app","difficulty":"advanced","pass":"Function complexity is measured and limited (ESLint `complexity`, Ruff C901/mccabe, gocyclo, Clippy cognitive_complexity, Sonar, etc.).","fix":"Enable a complexity rule with a sensible max in the existing linter."},{"id":"code_modularization","name":"Module boundaries enforced","pillar":"style","level":4,"scope":"app","difficulty":"advanced","pass":"Architectural boundaries are enforced by tooling (dependency-cruiser, eslint-plugin-boundaries, Nx module boundaries, import-linter, ArchUnit, Go internal/ packages used deliberately).","fix":"Add dependency-cruiser/import-linter rules for the main layers."},{"id":"n_plus_one_detection","name":"N+1 query detection","pillar":"style","level":4,"scope":"app","difficulty":"advanced","pass":"Apps that use an ORM/database have N+1 detection (Bullet, nplusone, Django assertNumQueries patterns, Prisma/Hibernate query logging checks). Skip if the app has no database access.","fix":"Add an N+1 detector in test mode."},{"id":"build_cmd_doc","name":"Build command documented","pillar":"build","level":1,"scope":"app","difficulty":"basic","pass":"The exact commands to install, build and run are written down (README, AGENTS.md, CONTRIBUTING) or exposed as obvious scripts (package.json scripts, Makefile, justfile, Taskfile).","fix":"Add a 'Commands' section to AGENTS.md listing install/build/test/lint/run."},{"id":"deps_pinned","name":"Dependencies locked","pillar":"build","level":1,"scope":"app","difficulty":"basic","pass":"A lockfile is committed (package-lock.json, pnpm-lock.yaml, yarn.lock, bun.lock(b), uv.lock, poetry.lock, Pipfile.lock, Cargo.lock for binaries, go.sum, Gemfile.lock, composer.lock, etc.).","fix":"Generate and commit the lockfile; stop ignoring it."},{"id":"vcs_cli_tools","name":"VCS CLI available","pillar":"build","level":2,"scope":"repo","difficulty":"basic","pass":"The hosting platform's CLI (gh, glab, az repos, etc.) is installed and authenticated in the environment the agent runs in, so it can open PRs and read CI/issue state.","fix":"Install and authenticate `gh`/`glab` in the dev environment or devcontainer."},{"id":"single_command_setup","name":"Single-command setup","pillar":"build","level":2,"scope":"repo","difficulty":"intermediate","pass":"A fresh clone can be bootstrapped with one documented command (`make setup`, `./scripts/bootstrap`, `just setup`, `npm run setup`, devcontainer, `mise install && ...`).","fix":"Add a bootstrap script/target that installs deps, copies env templates and prepares local services."},{"id":"agentic_development","name":"Agents already in the loop","pillar":"build","level":3,"scope":"repo","difficulty":"basic","pass":"There is evidence agents already work here: agent co-author trailers in recent commits, agent config dirs (.claude/, .cursor/, .codex/, .factory/, .github/copilot-instructions.md), or agent bot PRs.","fix":"Start routing small tasks through an agent; commit its config so the setup is shared."},{"id":"automated_pr_review","name":"Automated PR review","pillar":"build","level":3,"scope":"repo","difficulty":"intermediate","pass":"Pull requests get automated review beyond CI pass/fail: an AI reviewer, a review bot, Danger, or policy bots that comment on PRs.","fix":"Enable an AI code reviewer or Danger rules on PRs."},{"id":"release_automation","name":"Release automation","pillar":"build","level":3,"scope":"repo","difficulty":"intermediate","pass":"Releases/deploys are triggered by automation (CD workflow on merge/tag, semantic-release, changesets, release-please, GoReleaser, platform auto-deploy like Vercel/Netlify/Fly connected to the repo).","fix":"Add a CD workflow on merge to main or a tag-driven release tool."},{"id":"monorepo_tooling","name":"Monorepo tooling","pillar":"build","level":3,"scope":"repo","difficulty":"intermediate","pass":"Multi-app repos use workspace tooling (pnpm/npm/yarn workspaces, Turborepo, Nx, Bazel, Pants, Cargo/Go workspaces, uv workspaces). Skip for single-app repos.","fix":"Declare workspaces and add a task runner (Turborepo/Nx) for cross-app commands."},{"id":"unused_dependencies_detection","name":"Unused dependency detection","pillar":"build","level":3,"scope":"app","difficulty":"intermediate","pass":"Unused dependencies are detected in CI or hooks (knip, depcheck, deptry, cargo-udeps/machete, `go mod tidy` diff check).","fix":"Add knip/depcheck/deptry/`go mod tidy -diff` to CI."},{"id":"fast_ci_feedback","name":"Fast CI feedback","pillar":"build","level":4,"scope":"repo","difficulty":"advanced","pass":"The slowest workflow that runs on pull requests typically finishes in about 10 minutes or less (median of recent runs). Fail if there is no CI at all.","fix":"Cache dependencies, split/parallelize jobs, run only affected targets."},{"id":"deployment_frequency","name":"Regular deployments","pillar":"build","level":4,"scope":"repo","difficulty":"intermediate","pass":"Releases or deploys happen regularly (e.g. several in the last 90 days, visible via tags, releases, or deploy workflow runs). Skip for libraries with no deploy target only if releases also aren't applicable.","fix":"Automate releases so shipping is cheap; release smaller and more often."},{"id":"build_performance_tracking","name":"Build performance tracked","pillar":"build","level":4,"scope":"repo","difficulty":"advanced","pass":"Builds are cached or measured: dependency or build caching in CI (actions/cache, setup-* cache), Turborepo/Nx/Bazel remote cache, sccache, or CI timing dashboards and build-time budgets.","fix":"Enable a build cache and track build durations in CI."},{"id":"release_notes_automation","name":"Release notes automated","pillar":"build","level":4,"scope":"repo","difficulty":"intermediate","pass":"Changelogs or release notes are generated from commits/PRs (changesets, release-please, semantic-release, git-cliff, GitHub generated notes, conventional commits enforced).","fix":"Adopt conventional commits + release-please/changesets."},{"id":"feature_flag_infrastructure","name":"Feature flags","pillar":"build","level":4,"scope":"app","difficulty":"advanced","pass":"Deployed apps have a feature flag system (LaunchDarkly, Unleash, GrowthBook, Flagsmith, PostHog flags, Statsig, OpenFeature, or a deliberate in-house system). Skip for libraries/CLIs.","fix":"Introduce a flag provider (OpenFeature-compatible) so risky changes can ship dark."},{"id":"heavy_dependency_detection","name":"Bundle size guard","pillar":"build","level":4,"scope":"app","difficulty":"advanced","pass":"Frontend/bundled apps have a size budget or analyzer in CI (size-limit, bundlesize, bundle analyzer with thresholds, Lighthouse CI budgets). Skip for non-bundled apps.","fix":"Add size-limit or a bundle budget check to CI."},{"id":"version_drift_detection","name":"Version drift detection","pillar":"build","level":4,"scope":"repo","difficulty":"advanced","pass":"Monorepos keep shared dependency versions aligned (syncpack, manypkg, pnpm catalogs, Renovate group rules, Bazel/Gradle version catalogs). Skip for single-app repos.","fix":"Add syncpack/manypkg or pnpm catalogs."},{"id":"progressive_rollout","name":"Progressive rollout","pillar":"build","level":5,"scope":"repo","difficulty":"advanced","pass":"Deploys can roll out gradually (canary, percentage rollouts, blue/green, Argo Rollouts, Flagger, platform traffic splitting). Skip for libraries/CLIs.","fix":"Add canary or percentage rollout to the deploy path."},{"id":"rollback_automation","name":"Automated rollback","pillar":"build","level":5,"scope":"repo","difficulty":"advanced","pass":"There is a documented one-step or automatic rollback (platform instant rollback, rollback workflow, Argo/Flagger auto-abort on bad metrics). Skip for libraries/CLIs.","fix":"Document the rollback command; add automatic abort on failed health checks."},{"id":"dead_feature_flag_detection","name":"Stale flag cleanup","pillar":"build","level":5,"scope":"repo","difficulty":"advanced","pass":"Stale feature flags are detected and cleaned up (flag provider stale reports wired to issues, Piranha, a CI check). Skip if there is no flag system.","fix":"Wire stale-flag reports into issues or add a cleanup check."},{"id":"unit_tests_exist","name":"Unit tests exist","pillar":"testing","level":1,"scope":"app","difficulty":"basic","pass":"The app has meaningful unit tests (test files alongside or in a tests/ dir; more than a placeholder).","fix":"Add a test framework and a first set of tests around core logic."},{"id":"unit_tests_runnable","name":"Tests runnable locally","pillar":"testing","level":1,"scope":"app","difficulty":"basic","pass":"There is a documented, single command that runs the tests locally without special credentials (`npm test`, `pytest`, `go test ./...`, `cargo test`, `make test`).","fix":"Expose one `test` command and document it in AGENTS.md."},{"id":"test_naming_conventions","name":"Test naming conventions","pillar":"testing","level":2,"scope":"app","difficulty":"basic","pass":"Test files follow a consistent, tool-recognized pattern (*.test.ts, *_test.go, test_*.py, configured testMatch/testpaths).","fix":"Pick one pattern and configure the runner to match it."},{"id":"integration_tests_exist","name":"Integration / E2E tests","pillar":"testing","level":3,"scope":"app","difficulty":"intermediate","pass":"There are tests that exercise components together or end to end (integration/ or e2e/ suites, Playwright, Cypress, testcontainers, API tests against a running service).","fix":"Add an integration or Playwright/E2E suite for the critical path."},{"id":"test_isolation","name":"Test isolation","pillar":"testing","level":3,"scope":"app","difficulty":"intermediate","pass":"Tests are isolated and parallel-safe: run in parallel (pytest-xdist, Jest/Vitest workers, go test -race/-parallel), use fixtures/factories, no shared mutable global state or order dependence.","fix":"Enable parallel test runs and fix order-dependent tests."},{"id":"test_coverage_thresholds","name":"Coverage tracked","pillar":"testing","level":3,"scope":"app","difficulty":"intermediate","pass":"Coverage is measured and either enforced with a threshold or reported on PRs (coverage thresholds in config, Codecov/Coveralls, CI coverage gate).","fix":"Collect coverage in CI and set a floor that ratchets upward."},{"id":"flaky_test_detection","name":"Flaky test detection","pillar":"testing","level":4,"scope":"repo","difficulty":"advanced","pass":"Flaky tests are detected or quarantined (retry-and-report, quarantine lists, Trunk/BuildPulse/Datadog CI visibility, stress-run jobs, flaky-test issue automation).","fix":"Turn on test retries with reporting, and quarantine known-flaky tests."},{"id":"test_performance_tracking","name":"Test performance tracked","pillar":"testing","level":4,"scope":"repo","difficulty":"advanced","pass":"Test durations or benchmarks are tracked (slowest-test reporting, --durations in CI, benchmark workflows, CI analytics).","fix":"Report slowest tests in CI; add benchmarks for hot paths."},{"id":"readme","name":"README","pillar":"docs","level":1,"scope":"repo","difficulty":"basic","pass":"A README exists and explains what the project is and how to get it running (not just a title or template boilerplate).","fix":"Write a README with purpose, setup, and run/test commands."},{"id":"agents_md","name":"Agent instructions file","pillar":"docs","level":2,"scope":"repo","difficulty":"basic","pass":"An agent instructions file exists with real, repo-specific content: AGENTS.md (the cross-harness standard), or a harness-specific equivalent (CLAUDE.md, GEMINI.md, .cursor/rules, .github/copilot-instructions.md, .windsurfrules). Must cover commands and conventions, not just a stub.","fix":"Create AGENTS.md: project map, commands (install/build/test/lint), conventions, gotchas. Symlink or reference it from harness-specific files."},{"id":"documentation_freshness","name":"Docs kept fresh","pillar":"docs","level":2,"scope":"repo","difficulty":"basic","pass":"Key docs in the repo (README, AGENTS.md or equivalent, CONTRIBUTING) were each updated within 180 days of the repository's latest commit, so they move with the code. A stub that only links elsewhere counts as present but not substantive.","fix":"Review and refresh README/AGENTS.md against the current commands."},{"id":"skills","name":"Agent skills / commands","pillar":"docs","level":3,"scope":"repo","difficulty":"intermediate","pass":"Reusable agent skills or commands for working on this repo are committed where harnesses discover them (.claude/skills, .agents/skills, .factory/skills, .codex/skills, .cursor/skills, .github/skills, or custom slash-command/prompt dirs). Skills shipped as package data for end users don't count.","fix":"Capture a repeated workflow (release, migration, debugging) as a SKILL.md."},{"id":"api_schema_docs","name":"API schema documented","pillar":"docs","level":3,"scope":"app","difficulty":"intermediate","pass":"Apps that expose an API publish a machine-readable schema (OpenAPI/Swagger, GraphQL SDL, protobuf, tRPC/zod schemas exported, JSON Schema). Skip for apps with no API surface.","fix":"Generate an OpenAPI spec (or SDL) from the code and commit/serve it."},{"id":"service_flow_documented","name":"Architecture documented","pillar":"docs","level":3,"scope":"repo","difficulty":"intermediate","pass":"Architecture or key flows are documented (ARCHITECTURE.md, docs/ with diagrams, Mermaid/PlantUML, ADRs) beyond what the README says.","fix":"Add ARCHITECTURE.md with a component map and one or two key request flows."},{"id":"automated_doc_generation","name":"Docs generated","pillar":"docs","level":4,"scope":"repo","difficulty":"advanced","pass":"Some docs are generated from source and kept in sync automatically (TypeDoc, Sphinx autodoc, rustdoc/godoc published, OpenAPI generation in CI, docs site build).","fix":"Generate API/reference docs in CI."},{"id":"agents_md_validation","name":"Agent instructions verified","pillar":"docs","level":5,"scope":"repo","difficulty":"advanced","pass":"Something checks that the agent instructions stay true: a CI job that runs the documented commands, an automated AGENTS.md updater, or a scheduled agent that refreshes it.","fix":"Add a CI job that executes the commands listed in AGENTS.md."},{"id":"env_template","name":"Env template","pillar":"devenv","level":2,"scope":"app","difficulty":"basic","pass":"Required environment variables are documented in a committed template (.env.example, .env.sample, .env.template) or a documented config section. Skip if the app needs no env configuration.","fix":"Commit .env.example listing every variable with a safe placeholder and a comment."},{"id":"devcontainer","name":"Reproducible environment","pillar":"devenv","level":2,"scope":"repo","difficulty":"intermediate","pass":"A reproducible dev environment is defined: .devcontainer/devcontainer.json, Nix flake/shell, devbox.json, or a Dockerfile/compose setup documented for development.","fix":"Add .devcontainer/devcontainer.json with the toolchain and post-create setup."},{"id":"local_services_setup","name":"Local services","pillar":"devenv","level":3,"scope":"repo","difficulty":"intermediate","pass":"Backing services (DB, cache, queues) can be started locally with one command (docker-compose, Tilt, Skaffold, supabase start, testcontainers). Skip if there are no backing services.","fix":"Add compose.yaml for the backing services and document `docker compose up`."},{"id":"database_schema","name":"Schema as code","pillar":"devenv","level":3,"scope":"app","difficulty":"intermediate","pass":"Apps that use a database manage schema as code (migrations dir, Prisma/Drizzle schema, Alembic, Rails/Django migrations, Flyway, Atlas). Skip if there is no database.","fix":"Adopt a migration tool and commit the schema."},{"id":"devcontainer_runnable","name":"Environment verified","pillar":"devenv","level":4,"scope":"repo","difficulty":"advanced","pass":"The reproducible environment is exercised in CI (devcontainers/ci action, Nix build in CI, compose-based test job) so it doesn't rot. Skip if no environment definition exists (devcontainer already fails).","fix":"Build the devcontainer (or Nix shell) in CI."},{"id":"structured_logging","name":"Structured logging","pillar":"observability","level":3,"scope":"app","difficulty":"intermediate","pass":"Deployed services log through a structured logger (pino, winston JSON, structlog, zap, slog, tracing, logback JSON) instead of bare print/console.log. Skip for libraries.","fix":"Adopt a structured logger with request/trace IDs in every line."},{"id":"distributed_tracing","name":"Tracing","pillar":"observability","level":3,"scope":"app","difficulty":"advanced","pass":"Services emit traces (OpenTelemetry, Datadog APM, Honeycomb, Sentry performance, X-Ray) with trace context propagated. Skip for libraries/CLIs.","fix":"Add OpenTelemetry auto-instrumentation and export to your backend."},{"id":"metrics_collection","name":"Metrics","pillar":"observability","level":3,"scope":"app","difficulty":"intermediate","pass":"Services expose or ship runtime metrics (Prometheus client, StatsD, OpenTelemetry metrics, Datadog, platform analytics). Skip for libraries/CLIs.","fix":"Expose RED metrics (rate, errors, duration) via OpenTelemetry or Prometheus."},{"id":"error_tracking_contextualized","name":"Error tracking","pillar":"observability","level":3,"scope":"app","difficulty":"intermediate","pass":"Errors are captured with context (Sentry, Bugsnag, Rollbar, Honeybadger, Datadog error tracking) including release/user/request tags. Skip for libraries.","fix":"Add Sentry (or equivalent) with release and environment tags."},{"id":"health_checks","name":"Health checks","pillar":"observability","level":3,"scope":"app","difficulty":"basic","pass":"Services expose health/readiness endpoints or probes (/health, /healthz, /ready, k8s probes, platform health checks). Skip for libraries/CLIs/static sites.","fix":"Add /healthz (liveness) and /readyz (dependencies) endpoints."},{"id":"alerting_configured","name":"Alerting","pillar":"observability","level":4,"scope":"repo","difficulty":"advanced","pass":"Alert rules are defined as code or documented (Prometheus/Alertmanager rules, Datadog/Grafana monitors-as-code, PagerDuty/Opsgenie integration, Sentry alert rules referenced). Skip for libraries.","fix":"Define alerts as code for error rate and latency SLOs."},{"id":"deployment_observability","name":"Deploy observability","pillar":"observability","level":4,"scope":"repo","difficulty":"advanced","pass":"Deploys are visible in monitoring (release markers in Sentry/Datadog, deploy annotations, dashboards linked from docs) so regressions can be tied to a release. Skip for libraries.","fix":"Send release/deploy markers from the deploy workflow."},{"id":"profiling_instrumentation","name":"Profiling","pillar":"observability","level":4,"scope":"app","difficulty":"advanced","pass":"Performance can be profiled in a standard way (pprof endpoints, continuous profiling like Pyroscope/Datadog, documented profiling scripts, benchmark harnesses).","fix":"Expose pprof/py-spy recipes or enable continuous profiling."},{"id":"runbooks_documented","name":"Runbooks","pillar":"observability","level":4,"scope":"repo","difficulty":"intermediate","pass":"Operational runbooks exist (runbooks/ or docs/ops, incident playbooks, linked from alerts or docs). Skip for libraries.","fix":"Write runbooks for the top alerts and common incidents."},{"id":"code_quality_metrics","name":"Code quality metrics","pillar":"observability","level":4,"scope":"repo","difficulty":"intermediate","pass":"Code health is measured over time (coverage trend, SonarQube/CodeClimate/Codacy, DeepSource, CI-published quality reports).","fix":"Publish coverage and lint debt to a dashboard or PR comments."},{"id":"circuit_breakers","name":"Resilience patterns","pillar":"observability","level":5,"scope":"app","difficulty":"advanced","pass":"Calls to external dependencies use circuit breakers/bulkheads/timeouts via a library or mesh (opossum, resilience4j, Polly, pybreaker, gobreaker, Istio/Envoy policies). Skip for apps without external dependencies.","fix":"Wrap outbound calls with timeouts + a circuit breaker library."},{"id":"gitignore_comprehensive","name":"Comprehensive .gitignore","pillar":"security","level":1,"scope":"repo","difficulty":"basic","pass":".gitignore excludes secrets (.env, key files), dependency dirs, build output and editor/OS junk for the languages in use, and no such files are tracked.","fix":"Extend .gitignore from the github/gitignore template for each language; untrack anything sensitive."},{"id":"branch_protection","name":"Branch protection","pillar":"security","level":2,"scope":"repo","difficulty":"basic","pass":"The default branch is protected (branch protection or rulesets requiring PRs/reviews/status checks). Verify with the platform CLI/API when possible.","fix":"Require PRs and passing checks on the default branch."},{"id":"codeowners","name":"CODEOWNERS","pillar":"security","level":2,"scope":"repo","difficulty":"basic","pass":"A CODEOWNERS file exists (root, .github/ or docs/) assigning owners to paths.","fix":"Add .github/CODEOWNERS with at least a default owner."},{"id":"secret_scanning","name":"Secret scanning","pillar":"security","level":3,"scope":"repo","difficulty":"basic","pass":"Secrets are scanned for: platform secret scanning/push protection enabled, or gitleaks/trufflehog/detect-secrets in hooks or CI.","fix":"Enable push protection, or add gitleaks to pre-commit and CI."},{"id":"dependency_update_automation","name":"Dependency updates automated","pillar":"security","level":3,"scope":"repo","difficulty":"basic","pass":"Dependency updates are automated (Dependabot config, Renovate config, or equivalent).","fix":"Add .github/dependabot.yml or renovate.json."},{"id":"secrets_management","name":"Secrets management","pillar":"security","level":3,"scope":"app","difficulty":"intermediate","pass":"Runtime secrets come from a manager or platform store (env injected by platform, Vault, AWS/GCP/Azure secret managers, Doppler, 1Password, SOPS) and no secrets are hardcoded in source.","fix":"Move secrets to the platform's secret store; read them from env at runtime."},{"id":"log_scrubbing","name":"Log scrubbing","pillar":"security","level":4,"scope":"app","difficulty":"advanced","pass":"Logs redact sensitive fields (logger redact config, scrubbing processors, Sentry beforeSend scrubbing). Skip for libraries and CLIs.","fix":"Configure logger redaction paths for tokens, passwords and PII."},{"id":"pii_handling","name":"PII handling","pillar":"security","level":4,"scope":"app","difficulty":"advanced","pass":"Apps that handle personal data have an explicit approach (data classification, PII-tagged fields, encryption at rest for sensitive columns, documented retention). Skip if no personal data.","fix":"Document which fields are PII and how they're protected and retained."},{"id":"automated_security_review","name":"Static security analysis","pillar":"security","level":4,"scope":"repo","difficulty":"intermediate","pass":"Application source or dependencies are scanned for vulnerabilities on PRs (CodeQL, Semgrep, Snyk, SonarQube security, Bandit, gosec, npm/pip/cargo audit, osv-scanner). Linters that only scan CI workflow files (e.g. zizmor, actionlint) don't count.","fix":"Enable CodeQL or add Semgrep to CI."},{"id":"dast_scanning","name":"Dynamic security testing","pillar":"security","level":5,"scope":"app","difficulty":"advanced","pass":"Running web apps are scanned dynamically (OWASP ZAP, Burp, Nuclei, StackHawk) in CI or on a schedule. Skip for non-web apps.","fix":"Run a ZAP baseline scan against a preview deployment."},{"id":"privacy_compliance","name":"Privacy compliance","pillar":"security","level":5,"scope":"repo","difficulty":"advanced","pass":"User-facing products that collect personal data have privacy controls in code (consent management, data export/deletion paths, documented DPA/GDPR handling). Skip otherwise.","fix":"Implement data export/deletion flows and consent handling."},{"id":"issue_templates","name":"Issue templates","pillar":"tasks","level":2,"scope":"repo","difficulty":"basic","pass":"Issue templates or forms exist (.github/ISSUE_TEMPLATE/, .gitlab/issue_templates/).","fix":"Add bug and feature templates that ask for repro steps and acceptance criteria."},{"id":"pr_templates","name":"PR template","pillar":"tasks","level":2,"scope":"repo","difficulty":"basic","pass":"A pull/merge request template exists (pull_request_template.md in root, .github/ or docs/; .gitlab/merge_request_templates/).","fix":"Add .github/pull_request_template.md with summary, testing and risk sections."},{"id":"issue_labeling_system","name":"Issue labels","pillar":"tasks","level":3,"scope":"repo","difficulty":"basic","pass":"Issues use a deliberate label taxonomy beyond the platform defaults (type, area, priority), visible via the platform CLI/API or a labels config file.","fix":"Define type/area/priority labels (labels-as-code if possible)."},{"id":"backlog_health","name":"Healthy backlog","pillar":"tasks","level":4,"scope":"repo","difficulty":"intermediate","pass":"Open issues are descriptive and triaged: clear titles, bodies with context, labels applied, stale issues closed. Skip if the repo doesn't use an issue tracker visible to the agent.","fix":"Triage the backlog; add a stale bot and require labels."},{"id":"product_analytics_instrumentation","name":"Product analytics","pillar":"product","level":4,"scope":"app","difficulty":"intermediate","pass":"User-facing apps instrument product events (PostHog, Amplitude, Mixpanel, Segment, GA4, Plausible, Vercel Analytics). Skip for libraries, CLIs and internal infrastructure.","fix":"Add an analytics SDK and track the core activation events."},{"id":"experimentation_infrastructure","name":"Experimentation","pillar":"product","level":5,"scope":"app","difficulty":"advanced","pass":"User-facing apps can run A/B tests or experiments (GrowthBook, Statsig, Optimizely, PostHog experiments, LaunchDarkly experiments). Skip for libraries, CLIs and infrastructure.","fix":"Use the flag provider's experiments feature for the next feature launch."},{"id":"error_to_insight_pipeline","name":"Errors become tasks","pillar":"product","level":5,"scope":"repo","difficulty":"advanced","pass":"Production errors or user feedback flow automatically into the task tracker (Sentry/Bugsnag-to-issue integration, feedback-to-issue automation, an agent that files issues from alerts).","fix":"Connect error tracking to the issue tracker so new error groups open issues."}]},"score":{"level":2,"level_name":"Documented","threshold":0.8,"levels":[{"level":1,"name":"Functional","summary":"Code runs and basic tooling exists, but setup is manual and validation is thin.","passed":8.0,"applicable":9,"total":9,"rate":0.8888888888888888,"unlocked":true,"achieved":true},{"level":2,"name":"Documented","summary":"Workflows are written down for humans and agents; local guardrails catch mistakes early.","passed":8.0,"applicable":14,"total":14,"rate":0.5714285714285714,"unlocked":true,"achieved":true},{"level":3,"name":"Standardized","summary":"Processes are enforced by automation: integration tests, security scanning, observability.","passed":11.0,"applicable":15,"total":24,"rate":0.7333333333333333,"unlocked":false,"achieved":false},{"level":4,"name":"Optimized","summary":"Feedback loops are fast and measured; quality and delivery are tracked continuously.","passed":10.0,"applicable":16,"total":26,"rate":0.625,"unlocked":false,"achieved":false},{"level":5,"name":"Autonomous","summary":"The system checks and improves itself; agents can take on long-running work end to end.","passed":0.0,"applicable":2,"total":9,"rate":0.0,"unlocked":false,"achieved":false}],"pillars":[{"id":"style","name":"Style & Validation","why":"Linters, type checkers and formatters catch mistakes in seconds, so agents don't burn cycles waiting on CI to find a typo.","passed":6.0,"applicable":12,"total":13,"rate":0.5},{"id":"build","name":"Build System","why":"Deterministic, documented build and release commands let an agent verify its change compiles and ships without guessing flags.","passed":10.0,"applicable":12,"total":19,"rate":0.8333333333333334},{"id":"testing","name":"Testing","why":"Fast, locally runnable tests are the agent's feedback loop: change, run, read the failure, iterate.","passed":7.0,"applicable":8,"total":8,"rate":0.875},{"id":"docs","name":"Documentation","why":"Written instructions replace tribal knowledge. Agents only know what is discoverable in the repo.","passed":4.0,"applicable":7,"total":8,"rate":0.5714285714285714},{"id":"devenv","name":"Dev Environment","why":"Reproducible environments remove 'works on my machine' for humans and agents alike.","passed":1.0,"applicable":2,"total":5,"rate":0.5},{"id":"observability","name":"Debugging & Observability","why":"Logs, traces and metrics turn 'it failed' into 'it failed because X was null in Y', which an agent can act on.","passed":2.0,"applicable":2,"total":11,"rate":1.0},{"id":"security","name":"Security & Governance","why":"Agents move fast. Branch protection, secret scanning and ownership rules make sure they move fast safely.","passed":4.0,"applicable":8,"total":11,"rate":0.5},{"id":"tasks","name":"Task Discovery","why":"Structured issues, labels and templates let an agent find, scope and report on work without a human translating.","passed":3.0,"applicable":4,"total":4,"rate":0.75},{"id":"product","name":"Product & Experimentation","why":"Analytics and experiments let an agent see whether a change mattered, not just whether it compiled.","passed":0.0,"applicable":1,"total":3,"rate":0.0}],"overall":{"passed":37.0,"applicable":56,"total":82,"rate":0.6607142857142857},"next":{"level":3,"name":"Standardized","progress":0.5714285714285714,"criteria_needed":4},"skipped":26},"actions":[{"criterion":"agents_md","title":"Add an AGENTS.md with dev commands and conventions","why":"Contributor instructions live off-repo (contributing.md is a 7-line link to tiangolo.com), so agents must reverse-engineer setup from CI YAML; the same gap fails single_command_setup and naming_consistency at Level 2","how":"Commit AGENTS.md giving `uv sync` + `prek install` as the bootstrap, `bash scripts/test.sh`, `bash scripts/lint.sh`, `bash scripts/format.sh`, the 100% coverage rule, the docs_src/tests pairing and naming conventions"},{"criterion":"pr_templates","title":"Add a pull request template","why":"PRs need an emoji-prefixed title and a latest-changes label (a required check), but nothing tells an agent that before it opens one","how":"Add .github/pull_request_template.md covering title format, label, regression test and docs_src example checklist"},{"criterion":"codeowners","title":"Add CODEOWNERS","why":"No path ownership exists, so agents can't tell who reviews fastapi/ versus docs/\u003clang>/ translations","how":"Add .github/CODEOWNERS mapping fastapi/ and tests/ to core maintainers and docs/\u003clang>/ to translation reviewers"}],"history":[{"generated_at":"2026-11-01T02:39:09+00:00","level":2,"rate":0.6607142857142857}],"provisional":false,"rendered_at":"2026-11-01T02:40:06+00:00"}</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("data").textContent);
+  var R = D.report, M = D.meta, S = D.score;
+  var META = {}; M.criteria.forEach(function (c) { META[c.id] = c; });
+  var PILLAR = {}; M.pillars.forEach(function (p) { PILLAR[p.id] = p; });
+  var NS = "http://www.w3.org/2000/svg";
+  var pct = function (x) { return Math.round(x * 100) + "%"; };
+  var fmt = function (n) { return Math.round(n * 100) / 100; };
+  var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  var crit = function (id) { return R.criteria[id] || { status: "review", rationale: "" }; };
+  var STATUS_LABEL = { pass: "Pass", fail: "Fail", skip: "Skip", review: "Review" };
+  var STATUS_GLYPH = { pass: "✓", fail: "✕", skip: "–", review: "?" };
+
+  function el(tag, attrs, parent) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+
+  /* theme */
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem("ar-theme"); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
+  function isDark() {
+    var t = root.getAttribute("data-theme");
+    return t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+
+  /* tooltip */
+  var tip = document.getElementById("tip");
+  function showTip(html, ev) {
+    tip.innerHTML = html; tip.style.opacity = 1; moveTip(ev);
+  }
+  function moveTip(ev) {
+    var x = ev.clientX + 14, y = ev.clientY + 14, r = tip.getBoundingClientRect();
+    if (x + r.width > window.innerWidth - 8) x = ev.clientX - r.width - 14;
+    if (y + r.height > window.innerHeight - 8) y = ev.clientY - r.height - 14;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  function hideTip() { tip.style.opacity = 0; }
+  function bindTip(node, htmlFn) {
+    node.addEventListener("mouseenter", function (e) { showTip(htmlFn(), e); });
+    node.addEventListener("mousemove", moveTip);
+    node.addEventListener("mouseleave", hideTip);
+  }
+  function critTip(id) {
+    var c = crit(id), m = META[id];
+    var frac = c.denominator > 1 ? " · " + c.numerator + "/" + c.denominator + " apps" : "";
+    return "<b>" + esc(m.name) + "</b><br><span class='m'>L" + m.level + " · " + esc(PILLAR[m.pillar].name) + " · " +
+      STATUS_LABEL[c.status] + frac + "</span><br>" + esc(c.rationale || "");
+  }
+
+  /* header */
+  var repo = R.repo || {};
+  document.getElementById("repoName").textContent = "/ " + (repo.name || "repository");
+  var when = R.generated_at ? new Date(R.generated_at) : null;
+  var meta = [];
+  if (repo.branch) meta.push("<span><b>" + esc(repo.branch) + "</b>" + (repo.commit ? " @ " + esc(repo.commit.slice(0, 8)) : "") + "</span>");
+  if (when && !isNaN(when)) meta.push("<span>" + when.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) + "</span>");
+  var ev = R.evaluator || {};
+  if (ev.harness || ev.model) meta.push("<span>" + esc([ev.harness, ev.model].filter(Boolean).join(" · ")) + "</span>");
+  meta.push('<button class="toggle" id="themeBtn" type="button">Theme</button>');
+  document.getElementById("meta").innerHTML = meta.join("");
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var next = isDark() ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("ar-theme", next); } catch (e) {}
+  });
+  var banners = [];
+  if (D.provisional) banners.push("Provisional report: some criteria were still marked review and were scored as failing.");
+  if (repo.has_local_changes) banners.push("Evaluated with uncommitted local changes.");
+  if (banners.length) document.getElementById("banner").innerHTML = banners.map(function (b) { return '<div class="banner">' + esc(b) + "</div>"; }).join("");
+
+  /* panel 1: criteria grid (columns = levels) */
+  (function () {
+    var host = document.getElementById("pGrid"), W = 300, H = 400, top = 0;
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, preserveAspectRatio: "none" }, host);
+    var weights = [1.45, 1.15, .85, .62, .42];
+    var cols = M.levels.map(function (lv, i) {
+      var items = M.criteria.filter(function (c) { return c.level === lv.level; })
+        .sort(function (a, b) { return M.pillars.findIndex(function (p) { return p.id === a.pillar; }) - M.pillars.findIndex(function (p) { return p.id === b.pillar; }); });
+      return { lv: lv, items: items, w: items.length * weights[i] };
+    });
+    var total = cols.reduce(function (s, c) { return s + c.w; }, 0), x = 0;
+    var labelCells = [];
+    cols.forEach(function (col, ci) {
+      var w = W * col.w / total, n = col.items.length;
+      var k = Math.max(1, Math.round(Math.sqrt(n * w / H) * .8));
+      var rows = Math.ceil(n / k), ch = (H - top) / rows;
+      col.items.forEach(function (c, i) {
+        var r = Math.floor(i / k), inRow = Math.min(k, n - r * k), j = i - r * k;
+        var cw = w / inRow, cx = x + j * cw, cy = top + r * ch;
+        var res = crit(c.id), fillOp = 0;
+        if (res.status === "pass") fillOp = .2;
+        else if (res.status === "fail" && res.denominator > 1) fillOp = .2 * res.numerator / res.denominator;
+        var rect = el("rect", { x: cx, y: cy, width: cw, height: ch, fill: "#fff", "fill-opacity": fillOp,
+          stroke: "#fff", "stroke-opacity": res.status === "skip" ? .25 : .55, "stroke-width": .5,
+          "stroke-dasharray": res.status === "skip" ? "2 2" : "none", "vector-effect": "non-scaling-stroke", class: "cell" }, svg);
+        bindTip(rect, function () { return critTip(c.id); });
+        if (ci === 0 && r === Math.floor(rows / 2)) labelCells.push(cy);
+      });
+      x += w;
+    });
+    var o = S.overall;
+    host.setAttribute("aria-label", fmt(o.passed) + " of " + o.applicable + " applicable criteria passing");
+    var ly = (labelCells[0] || H / 2) + 2;
+    var t = document.createElement("div");
+    t.style.cssText = "position:absolute;left:3%;top:" + (ly / H * 100) + "%;font-weight:500;font-size:clamp(11px,1.1vw,14px);line-height:1.15;pointer-events:none;letter-spacing:-.005em;text-shadow:0 0 6px rgba(80,95,108,.6)";
+    t.innerHTML = fmt(o.passed) + " of " + o.applicable + "<br>criteria passing";
+    host.appendChild(t);
+  })();
+
+  /* panel 2: level staircase on hairline routes */
+  (function () {
+    var host = document.getElementById("pInk"), W = 300, H = 400;
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H }, host);
+    var xs = [118, 176, 74, 150, 104], ys = [92, 150, 208, 266, 324];
+    var line = function (op) { return { fill: "none", stroke: "#fff", "stroke-opacity": op, "stroke-width": .8, "vector-effect": "non-scaling-stroke" }; };
+    // decorative rounded frames, like routed traces
+    [[64, 44, 200, 300, 10, .14], [20, 124, 80, 116, 8, .1], [222, 176, 62, 170, 8, .12]].forEach(function (f) {
+      var a = line(f[5]); a.x = f[0]; a.y = f[1]; a.width = f[2]; a.height = f[3]; a.rx = f[4]; el("rect", a, svg);
+    });
+    var lvls = S.levels;
+    var widths = lvls.map(function (lv) { return lv.name.length * 8.4 + 46; });
+    for (var i = 0; i < lvls.length - 1; i++) {
+      var x1 = xs[i] - 10, y1 = ys[i] - 5, x2 = xs[i + 1] - 10, y2 = ys[i + 1] - 5, mid = Math.min(x1, x2) - 22 - (i % 2) * 14, r = 8;
+      var d = "M" + x1 + " " + y1 + " H" + (mid + r) + " Q" + mid + " " + y1 + " " + mid + " " + (y1 + r) +
+        " V" + (y2 - r) + " Q" + mid + " " + y2 + " " + (mid + r) + " " + y2 + " H" + x2;
+      var reached = lvls[i + 1].unlocked;
+      el("path", Object.assign(line(reached ? .78 : .2), { d: d }), svg);
+    }
+    // vertical drop from the right edge of each word, echoing the reference
+    lvls.forEach(function (lv, i) {
+      var xe = Math.min(W - 14, xs[i] + widths[i] - 10);
+      el("path", Object.assign(line(.18), { d: "M" + xe + " " + (ys[i] - 26) + " V" + (ys[i] - 14) + " Q" + xe + " " + (ys[i] - 8) + " " + (xe - 6) + " " + (ys[i] - 8) }), svg);
+    });
+    var txt = function (x, y, s, attrs) {
+      var t = el("text", Object.assign({ x: x, y: y, fill: "#fff", "font-size": 14, "font-weight": 500, "font-family": "var(--sans)" }, attrs || {}), svg);
+      t.textContent = s; return t;
+    };
+    txt(16, 30, "Level " + S.level);
+    lvls.forEach(function (lv, i) {
+      var cur = lv.level === S.level, op = lv.unlocked ? 1 : .36;
+      if (cur) el("rect", { x: xs[i] - 16, y: ys[i] - 10, width: 6, height: 6, fill: "#fff" }, svg);
+      var t = txt(xs[i], ys[i], lv.name, { "fill-opacity": op });
+      var p = txt(xs[i] + lv.name.length * 8.4 + 6, ys[i], pct(lv.rate), { "font-size": 9.5, "font-family": "var(--mono)", "font-weight": 400, "fill-opacity": op * .7 });
+      var hit = el("rect", { x: xs[i] - 18, y: ys[i] - 16, width: widths[i] + 10, height: 22, fill: "transparent" }, svg);
+      bindTip(hit, function () {
+        return "<b>Level " + lv.level + ": " + esc(lv.name) + "</b><br><span class='m'>" + fmt(lv.passed) + "/" + lv.applicable + " passing · " + pct(lv.rate) +
+          (lv.level < S.level ? " · cleared" : lv.level === S.level ? " · current" : " · locked") + "</span><br>" + esc(lv.summary);
+      });
+    });
+    txt(16, 384, S.next ? "Next: " + S.next.name : "Fully autonomous", { "fill-opacity": .9 });
+    host.setAttribute("aria-label", "Level " + S.level + " of 5, " + S.level_name);
+  })();
+
+  /* panel 3: lede + concentric broken arcs (one ring per pillar) */
+  (function () {
+    var host = document.getElementById("pSand"), W = 300, H = 400;
+    var o = S.overall, n = S.next;
+    var lede = esc(repo.name || "This repository") + " is at Level " + S.level + ", " + esc(S.level_name) + ". " +
+      fmt(o.passed) + " of " + o.applicable + " applicable criteria pass (" + pct(o.rate) + ")" +
+      (n ? (n.criteria_needed ? ", and " + n.criteria_needed + " more at Level " + S.level + " would unlock " + esc(n.name) + "." : ". " + esc(n.name) + " is next.") : ".");
+    document.getElementById("lede").innerHTML = lede;
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H }, host);
+    host.insertBefore(svg, host.firstChild);
+    var cx = 200, cy = 286, r0 = 24, step = 15;
+    var polar = function (r, a) { var t = (a - 90) * Math.PI / 180; return [cx + r * Math.cos(t), cy + r * Math.sin(t)]; };
+    M.pillars.forEach(function (p, pi) {
+      var items = M.criteria.filter(function (c) { return c.pillar === p.id; });
+      var r = r0 + pi * step, n = items.length, span = 360 / n, gap = Math.min(10, span * .28), rot = pi * 37;
+      items.forEach(function (c, i) {
+        var res = crit(c.id);
+        if (res.status === "skip") return;
+        var a1 = rot + i * span + gap / 2, a2 = rot + (i + 1) * span - gap / 2;
+        var s = polar(r, a1), e = polar(r, a2), large = a2 - a1 > 180 ? 1 : 0;
+        var frac = res.denominator ? res.numerator / res.denominator : 0;
+        var op = res.status === "pass" ? .9 : res.denominator > 1 && frac > 0 ? .25 + .5 * frac : .2;
+        var arc = el("path", { d: "M" + s[0] + " " + s[1] + " A" + r + " " + r + " 0 " + large + " 1 " + e[0] + " " + e[1],
+          fill: "none", stroke: "#1b1d1e", "stroke-opacity": op, "stroke-width": 1.2, "stroke-linecap": "butt", class: "arc" }, svg);
+        bindTip(arc, function () { return critTip(c.id); });
+      });
+    });
+  })();
+
+  /* 01 levels */
+  document.getElementById("levels").innerHTML = S.levels.map(function (lv) {
+    var cls = lv.level < S.level ? "done" : lv.level === S.level ? "current" : "locked";
+    var state = lv.level < S.level ? "Cleared" : lv.level === S.level ? (lv.level === 5 ? "Current" : "Current · " + pct(S.threshold) + " unlocks " + S.levels[lv.level].name) : "Locked";
+    return '<div class="lv ' + cls + '"><div class="n"><span>L' + lv.level + "</span><span>" + fmt(lv.passed) + "/" + lv.applicable + '</span></div><div class="name">' + esc(lv.name) +
+      '</div><div class="v">' + Math.round(lv.rate * 100) + '<small>%</small></div><div class="track"><div class="fill" style="width:' + (lv.rate * 100) + '%"></div><div class="tick" style="left:' + (S.threshold * 100) + '%" title="80% gate"></div></div><div class="state">' + state + "</div></div>";
+  }).join("");
+
+  /* 02 pillars */
+  var pillarsEl = document.getElementById("pillars");
+  S.pillars.forEach(function (p) {
+    var row = document.createElement("div");
+    row.className = "pr";
+    row.innerHTML = '<div class="label">' + esc(p.name) + '</div><div class="track"><div class="fill" style="width:' + (p.rate * 100) + '%"></div></div><div class="val">' + fmt(p.passed) + "/" + p.applicable + " · " + pct(p.rate) + "</div>";
+    bindTip(row, function () { return "<b>" + esc(p.name) + "</b><br><span class='m'>" + fmt(p.passed) + "/" + p.applicable + " passing · " + (p.total - p.applicable) + " skipped</span><br>" + esc(p.why); });
+    pillarsEl.appendChild(row);
+  });
+
+  /* 03 actions */
+  document.getElementById("actions").innerHTML = (D.actions || []).length ? D.actions.map(function (a, i) {
+    return '<div class="act"><div class="i">0' + (i + 1) + "</div><h3>" + esc(a.title) + "</h3><code>" + esc(a.criterion || "") + "</code><p>" + esc(a.how || "") + "</p>" +
+      (a.why ? '<p class="now">Now: ' + esc(a.why) + "</p>" : "") + "</div>";
+  }).join("") : '<div class="act"><h3>Nothing failing</h3><p>Every applicable criterion passes.</p></div>';
+
+  /* 04 trend */
+  (function () {
+    var host = document.getElementById("trend"), H = (D.history || []).filter(function (h) { return h.rate != null; });
+    if (H.length < 2) {
+      host.innerHTML = '<div class="empty">First run: ' + pct(S.overall.rate) + " at Level " + S.level + ". The trend appears after the next run (history.jsonl is kept next to the report; commit it to share the trend).</div>";
+      return;
+    }
+    var W = 720, Ht = 180, pl = 36, pr = 16, pt = 16, pb = 26;
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + Ht, role: "img", "aria-label": "Pass rate over " + H.length + " runs" }, host);
+    var X = function (i) { return pl + (W - pl - pr) * (H.length === 1 ? .5 : i / (H.length - 1)); };
+    var Y = function (v) { return pt + (Ht - pt - pb) * (1 - v); };
+    [0, .5, 1].forEach(function (v) {
+      el("line", { x1: pl, x2: W - pr, y1: Y(v), y2: Y(v), stroke: "var(--rule)", "stroke-width": 1 }, svg);
+      var t = el("text", { x: pl - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 10, fill: "var(--muted)", "font-family": "var(--mono)" }, svg); t.textContent = Math.round(v * 100) + "%";
+    });
+    el("path", { d: H.map(function (h, i) { return (i ? "L" : "M") + X(i) + " " + Y(h.rate); }).join(" "), fill: "none", stroke: "var(--bar)", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+    H.forEach(function (h, i) {
+      var changed = i === 0 || h.level !== H[i - 1].level;
+      el("circle", { cx: X(i), cy: Y(h.rate), r: 4, fill: "var(--bar)", stroke: "var(--bg)", "stroke-width": 2 }, svg);
+      if (changed || i === H.length - 1) {
+        var t = el("text", { x: X(i), y: Y(h.rate) - 10, "text-anchor": i === H.length - 1 ? "end" : "middle", "font-size": 11, fill: "var(--text-2)" }, svg);
+        t.textContent = "L" + h.level + (i === H.length - 1 ? " · " + pct(h.rate) : "");
+      }
+      var d = h.generated_at ? new Date(h.generated_at) : null;
+      if (i === 0 || i === H.length - 1) {
+        var dt = el("text", { x: X(i), y: Ht - 6, "text-anchor": i === 0 ? "start" : "end", "font-size": 10, fill: "var(--muted)" }, svg);
+        dt.textContent = d && !isNaN(d) ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
+      }
+    });
+    var cross = el("line", { y1: pt, y2: Ht - pb, stroke: "var(--rule-strong)", "stroke-width": 1, opacity: 0 }, svg);
+    var hit = el("rect", { x: pl, y: 0, width: W - pl - pr, height: Ht, fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", function (e) {
+      var b = svg.getBoundingClientRect(), vx = (e.clientX - b.left) / b.width * W;
+      var i = Math.max(0, Math.min(H.length - 1, Math.round((vx - pl) / ((W - pl - pr) / (H.length - 1)))));
+      var h = H[i], d = h.generated_at ? new Date(h.generated_at) : null;
+      cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("opacity", 1);
+      showTip("<b>Level " + h.level + " · " + pct(h.rate) + "</b><br><span class='m'>" + (d && !isNaN(d) ? d.toLocaleString() : "") + (h.commit ? " · " + esc(h.commit.slice(0, 8)) : "") + "</span>", e);
+    });
+    hit.addEventListener("mouseleave", function () { cross.setAttribute("opacity", 0); hideTip(); });
+  })();
+
+  /* 05 criteria explorer */
+  var state = { status: "all", pillar: "all", q: "" };
+  var counts = { all: 0, fail: 0, pass: 0, skip: 0, review: 0 };
+  M.criteria.forEach(function (c) { counts.all++; counts[crit(c.id).status]++; });
+  var segs = [["all", "All"], ["fail", "Failing"], ["pass", "Passing"], ["skip", "Skipped"]];
+  if (counts.review) segs.splice(2, 0, ["review", "Review"]);
+  var segEl = document.getElementById("segStatus");
+  segs.forEach(function (s) {
+    var b = document.createElement("button");
+    b.type = "button"; b.textContent = s[1] + " " + counts[s[0]]; b.setAttribute("aria-pressed", s[0] === state.status);
+    b.addEventListener("click", function () { state.status = s[0]; segEl.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", x === b); }); draw(); });
+    segEl.appendChild(b);
+  });
+  var fP = document.getElementById("fPillar");
+  fP.innerHTML = '<option value="all">All pillars</option>' + M.pillars.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + "</option>"; }).join("");
+  fP.addEventListener("change", function () { state.pillar = fP.value; draw(); });
+  document.getElementById("fSearch").addEventListener("input", function (e) { state.q = e.target.value.toLowerCase(); draw(); });
+  var openGroups = {}; openGroups[S.level] = true;
+
+  function row(c) {
+    var r = crit(c.id), apps = r.apps || {};
+    var score = r.status === "skip" ? "–" : r.denominator > 1 ? r.numerator + "/" + r.denominator : (r.status === "pass" ? "1/1" : "0/1");
+    var appRows = Object.keys(apps).length > 1 ? "<dt>Apps</dt><dd><ul>" + Object.keys(apps).map(function (k) {
+      var a = apps[k]; return '<li><span class="st ' + a.status + '"><i>' + STATUS_GLYPH[a.status] + '</i></span> <span class="mono">' + esc(k) + "</span> " + esc(a.rationale || "") + "</li>";
+    }).join("") + "</ul></dd>" : "";
+    var prev = r.previous && r.previous.status && r.previous.status !== r.status ? "<dt>Changed</dt><dd>Was " + STATUS_LABEL[r.previous.status] + " last run</dd>" : "";
+    return '<div class="crit" tabindex="0"><span class="st ' + r.status + '"><i>' + STATUS_GLYPH[r.status] + "</i>" + STATUS_LABEL[r.status] + '</span><div><span class="nm">' + esc(c.name) + '</span><span class="id">' + c.id +
+      '</span><div class="ra">' + esc(r.rationale || "") + '</div></div><span class="pl">' + esc(PILLAR[c.pillar].name) + '</span><span class="sc">' + score + '</span><div class="more"><dl>' + appRows + prev +
+      "<dt>Passes if</dt><dd>" + esc(c.pass) + "</dd>" + (r.status === "fail" || r.status === "review" ? "<dt>Fix</dt><dd>" + esc(c.fix) + "</dd>" : "") +
+      "<dt>Scope</dt><dd>" + (c.scope === "app" ? "Per application" : "Repository") + " · " + c.difficulty + "</dd></dl></div></div>";
+  }
+  function draw() {
+    var host = document.getElementById("criteria"), shown = 0, html = "";
+    M.levels.forEach(function (lv) {
+      var items = M.criteria.filter(function (c) {
+        if (c.level !== lv.level) return false;
+        var r = crit(c.id);
+        if (state.status !== "all" && r.status !== state.status) return false;
+        if (state.pillar !== "all" && c.pillar !== state.pillar) return false;
+        if (state.q && (c.name + " " + c.id + " " + (r.rationale || "")).toLowerCase().indexOf(state.q) < 0) return false;
+        return true;
+      });
+      if (!items.length) return;
+      shown += items.length;
+      var L = S.levels[lv.level - 1];
+      var open = state.q || state.status !== "all" || state.pillar !== "all" || openGroups[lv.level];
+      html += '<details class="grp" data-l="' + lv.level + '"' + (open ? " open" : "") + '><summary><span class="lvn">L' + lv.level + '</span><span class="t">' + esc(lv.name) + '</span><span class="s">' + items.length + " shown · " + pct(L.rate) + " passing</span></summary>" + items.map(row).join("") + "</details>";
+    });
+    host.innerHTML = html || '<div class="empty">No criteria match these filters.</div>';
+    document.getElementById("count").textContent = shown + " of " + M.criteria.length;
+    host.querySelectorAll("details.grp").forEach(function (d) { d.addEventListener("toggle", function () { openGroups[d.dataset.l] = d.open; }); });
+    host.querySelectorAll(".crit").forEach(function (n) {
+      var t = function () { n.classList.toggle("open"); };
+      n.addEventListener("click", t);
+      n.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); t(); } });
+    });
+  }
+  draw();
+
+  /* 06 apps */
+  var appKeys = Object.keys(R.apps || {});
+  if (appKeys.length > 1) {
+    document.getElementById("appsSec").hidden = false;
+    document.getElementById("apps").innerHTML = appKeys.map(function (k) {
+      var a = R.apps[k];
+      return '<div class="app"><span class="mono">' + esc(k) + '</span><p>' + esc(a.description || "") + '</p><div class="k">' + esc((a.languages || []).join(", ")) + (a.kind ? " · " + esc(a.kind) : "") + "</div></div>";
+    }).join("");
+  }
+
+  /* footer */
+  document.getElementById("foot").innerHTML =
+    "<p>" + M.criteria.length + " criteria across " + M.pillars.length + " pillars and 5 levels. A deterministic scan gathers evidence (files, configs, git history, the hosting platform's CLI), then the evaluating agent confirms or overrides each verdict and writes a one-line rationale. Scores are computed by script, not by the model, so they're repeatable.</p>" +
+    "<p>The level model and pillars follow Factory's Agent Readiness Model. This open, harness-agnostic implementation is an independent project, not affiliated with Factory.</p>" +
+    '<p class="mono">skill ' + esc((R.evaluator || {}).skill_version || "") + " · rendered " + esc(D.rendered_at || "") + "</p>";
+})();
+</script>
+</body>
+</html>

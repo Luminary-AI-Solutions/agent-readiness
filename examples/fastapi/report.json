@@ -1,0 +1,1181 @@
+{
+  "schema_version": 1,
+  "status": "final",
+  "repo": {
+    "name": "fastapi",
+    "url": "https://github.com/fastapi/fastapi.git",
+    "commit": "45cb2252c737906f37544f5ba6bee0295fb81468",
+    "branch": "master",
+    "has_local_changes": false,
+    "has_unpushed_commits": false
+  },
+  "generated_at": "2026-11-01T02:39:09+00:00",
+  "evaluator": {
+    "harness": "claude-code",
+    "model": "claude-opus-5-5",
+    "skill_version": "0.1.0"
+  },
+  "languages": [
+    "Python"
+  ],
+  "monorepo": {
+    "tool": null,
+    "app_count": 1,
+    "truncated": false,
+    "excluded": []
+  },
+  "apps": {
+    ".": {
+      "description": "FastAPI framework, high performance, easy to learn, fast to code, ready for production",
+      "languages": [
+        "Python"
+      ],
+      "kind": "library"
+    }
+  },
+  "criteria": {
+    "lint_config": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Linter configured: [tool.ruff, flake8",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Linter configured: [tool.ruff, flake8"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Linter configured: [tool.ruff, flake8"
+      }
+    },
+    "type_check": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Type checking configured: [tool.mypy, mypy, ty>",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Type checking configured: [tool.mypy, mypy, ty>"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Type checking configured: [tool.mypy, mypy, ty>"
+      }
+    },
+    "formatter": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Formatter available: black, .pre-commit-config.yaml (ruff format)",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Formatter available: black, .pre-commit-config.yaml (ruff format)"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Formatter available: black, .pre-commit-config.yaml (ruff format)"
+      }
+    },
+    "strict_typing": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "mypy/pyright strict",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "mypy/pyright strict"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "mypy/pyright strict"
+      }
+    },
+    "pre_commit_hooks": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Commit hooks configured: .pre-commit-config.yaml",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Commit hooks configured: .pre-commit-config.yaml"
+      }
+    },
+    "naming_consistency": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "Ruff selects E,W,F,I,B,C4,UP only (no pep8-naming N rules) and the in-repo contributing.md is a 7-line stub linking to tiangolo.com; no committed naming rules",
+      "apps": {
+        ".": {
+          "status": "fail",
+          "rationale": "Ruff selects E,W,F,I,B,C4,UP only (no pep8-naming N rules) and the in-repo contributing.md is a 7-line stub linking to tiangolo.com; no committed naming rules"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "fail",
+        "rationale": "No explicit naming rules found; judge whether conventions are evident and consistent"
+      }
+    },
+    "large_file_detection": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Large-file guard present: .pre-commit-config.yaml (check-added-large-files)",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Large-file guard present: .pre-commit-config.yaml (check-added-large-files)"
+      }
+    },
+    "tech_debt_tracking": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No TODO/FIXME tracking rule or scanner (10 source files contain TODO/FIXME markers)",
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "No TODO/FIXME tracking rule or scanner (10 source files contain TODO/FIXME markers)"
+      }
+    },
+    "dead_code_detection": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No dead code detector found",
+      "apps": {
+        ".": {
+          "status": "fail",
+          "rationale": "No dead code detector found"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "No dead code detector found"
+      }
+    },
+    "duplicate_code_detection": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No copy-paste detection found",
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "No copy-paste detection found"
+      }
+    },
+    "cyclomatic_complexity": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "Scanner matched C901 in pyproject.toml, but it is in [tool.ruff.lint] ignore (\"C901, too complex\"); no other complexity limit",
+      "apps": {
+        ".": {
+          "status": "fail",
+          "rationale": "Scanner matched C901 in pyproject.toml, but it is in [tool.ruff.lint] ignore (\"C901, too complex\"); no other complexity limit"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "fail",
+        "rationale": "Complexity limits configured: pyproject.toml (C901)"
+      }
+    },
+    "code_modularization": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No import-linter or other boundary tooling; underscore-private modules (fastapi/_compat) are convention only",
+      "apps": {
+        ".": {
+          "status": "fail",
+          "rationale": "No import-linter or other boundary tooling; underscore-private modules (fastapi/_compat) are convention only"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "fail",
+        "rationale": "No boundary-enforcement tooling found; check for deliberate structure (e.g. Go internal/)"
+      }
+    },
+    "n_plus_one_detection": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library: fastapi/ has no database access; SQLModel/SQLite appear only in docs_src tutorials and their tests",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library: fastapi/ has no database access; SQLModel/SQLite appear only in docs_src tutorials and their tests"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Database access detected but no N+1 query detection"
+      }
+    },
+    "build_cmd_doc": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "README only covers end-user install (uv add fastapi), but dev commands are exposed as scripts/test.sh, scripts/lint.sh, scripts/format.sh with uv.lock + dependency-groups; contributor guide itself lives off-repo",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "README only covers end-user install (uv add fastapi), but dev commands are exposed as scripts/test.sh, scripts/lint.sh, scripts/format.sh with uv.lock + dependency-groups; contributor guide itself lives off-repo"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "Build/run commands documented in README.md"
+      }
+    },
+    "deps_pinned": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Lockfiles committed: uv.lock",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Lockfiles committed: uv.lock"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Lockfiles committed: uv.lock"
+      }
+    },
+    "vcs_cli_tools": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "gh installed and authenticated",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "gh installed and authenticated"
+      }
+    },
+    "single_command_setup": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No setup script/Makefile target and no committed doc giving a bootstrap command; docs/en/docs/contributing.md defers to an external tiangolo.com page",
+      "source": "agent",
+      "previous": {
+        "status": "fail",
+        "rationale": "No setup script/Makefile target and no committed doc giving a bootstrap command; docs/en/docs/contributing.md defers to an external tiangolo.com page"
+      }
+    },
+    "agentic_development": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Scanner's evidence (fastapi/.agents) is a shipped user skill, but scripts/translate.py runs a pydantic-ai Agent on a schedule (translate.yml) that opens PRs via pr-submit[bot], e.g. #16497-#16501",
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "Scanner's evidence (fastapi/.agents) is a shipped user skill, but scripts/translate.py runs a pydantic-ai Agent on a schedule (translate.yml) that opens PRs via pr-submit[bot], e.g. #16497-#16501"
+      }
+    },
+    "automated_pr_review": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Scanner matched 'danger' in zizmor 'dangerous-triggers' comments (false evidence), but policy bots do comment on PRs: guard-dependencies.yml comments and closes, detect-conflicts.yml comments, latest-changes/label is a required check",
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "Scanner matched 'danger' in zizmor 'dangerous-triggers' comments (false evidence), but policy bots do comment on PRs: guard-dependencies.yml comments and closes, detect-conflicts.yml comments, latest-changes/label is a required check"
+      }
+    },
+    "release_automation": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Release/deploy automation: .github/workflows/create-draft-release.yml, .github/workflows/deploy-docs.yml, .github/workflows/prepare-release.yml (+5 more)",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Release/deploy automation: .github/workflows/create-draft-release.yml, .github/workflows/deploy-docs.yml, .github/workflows/prepare-release.yml (+5 more)"
+      }
+    },
+    "monorepo_tooling": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Single-application repository",
+      "source": "scan",
+      "previous": {
+        "status": "skip",
+        "rationale": "Single-application repository"
+      }
+    },
+    "unused_dependencies_detection": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No unused-dependency check found",
+      "apps": {
+        ".": {
+          "status": "fail",
+          "rationale": "No unused-dependency check found"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "No unused-dependency check found"
+      }
+    },
+    "fast_ci_feedback": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Test workflow on PRs: median 6.2 min across 20 recent runs (max 9.9); scanner's 1.6 min mixes in trivial workflows",
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "Test workflow on PRs: median 6.2 min across 20 recent runs (max 9.9); scanner's 1.6 min mixes in trivial workflows"
+      }
+    },
+    "deployment_frequency": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "42 tags/releases in the last 90 days",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "42 tags/releases in the last 90 days"
+      }
+    },
+    "build_performance_tracking": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "setup-uv enable-cache keyed on uv.lock in test/build-docs/publish workflows plus a paths-filter job; only dependency caching, nothing measures build time",
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "setup-uv enable-cache keyed on uv.lock in test/build-docs/publish workflows plus a paths-filter job; only dependency caching, nothing measures build time"
+      }
+    },
+    "release_notes_automation": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "latest-changes[bot] writes PR titles into docs/en/docs/release-notes.md on merge (81 of the last 400 commits, .github/latest-changes.yml) and create-draft-release.yml builds notes via scripts/prepare_release.py",
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "latest-changes[bot] writes PR titles into docs/en/docs/release-notes.md on merge (81 of the last 400 commits, .github/latest-changes.yml) and create-draft-release.yml builds notes via scripts/prepare_release.py"
+      }
+    },
+    "feature_flag_infrastructure": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library published to PyPI; no deployed app",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library published to PyPI; no deployed app"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "No feature flag system found"
+      }
+    },
+    "heavy_dependency_detection": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "No bundler detected; bundle size not applicable",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "No bundler detected; bundle size not applicable"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "skip",
+        "rationale": "No bundler detected; bundle size not applicable"
+      }
+    },
+    "version_drift_detection": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Single-application repository",
+      "source": "scan",
+      "previous": {
+        "status": "skip",
+        "rationale": "Single-application repository"
+      }
+    },
+    "progressive_rollout": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library released to PyPI; no deploy target to roll out",
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Library released to PyPI; no deploy target to roll out"
+      }
+    },
+    "rollback_automation": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library; scanner's evidence was the word 'rollback' in DB-dependency tutorials, not a deploy rollback",
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Library; scanner's evidence was the word 'rollback' in DB-dependency tutorials, not a deploy rollback"
+      }
+    },
+    "dead_feature_flag_detection": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "No feature flag system (library)",
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "No feature flag system (library)"
+      }
+    },
+    "unit_tests_exist": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "666 test files (e.g. docs_src/app_testing/app_a_py310/test_main.py, docs_src/app_testing/app_b_an_py310/test_main.py (+664 more))",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "666 test files (e.g. docs_src/app_testing/app_a_py310/test_main.py, docs_src/app_testing/app_b_an_py310/test_main.py (+664 more))"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "666 test files (e.g. docs_src/app_testing/app_a_py310/test_main.py, docs_src/app_testing/app_b_an_py310/test_main.py (+664 more))"
+      }
+    },
+    "unit_tests_runnable": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "scripts/test.sh runs `pytest -n auto --dist loadgroup tests scripts/tests/` with PYTHONPATH set, no credentials needed (it is not documented in README as the scanner claimed)",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "scripts/test.sh runs `pytest -n auto --dist loadgroup tests scripts/tests/` with PYTHONPATH set, no credentials needed (it is not documented in README as the scanner claimed)"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "Test command: pytest, documented in README/agent docs"
+      }
+    },
+    "test_naming_conventions": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Tests follow recognized patterns (666 files)",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Tests follow recognized patterns (666 files)"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Tests follow recognized patterns (666 files)"
+      }
+    },
+    "integration_tests_exist": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "tests/test_tutorial/* drive full docs_src apps through TestClient incl. SQLModel+SQLite, GraphQL (strawberry) and WSGI mounting; tests/test_telemetry/test_integrations.py exercises OTel export",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "tests/test_tutorial/* drive full docs_src apps through TestClient incl. SQLModel+SQLite, GraphQL (strawberry) and WSGI mounting; tests/test_telemetry/test_integrations.py exercises OTel export"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "No integration/E2E suite found by name; check whether any tests cross component boundaries"
+      }
+    },
+    "test_isolation": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Parallel-capable test runner: pytest-xdist",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Parallel-capable test runner: pytest-xdist"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Parallel-capable test runner: pytest-xdist"
+      }
+    },
+    "test_coverage_thresholds": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Coverage measured/enforced: .github/workflows/smokeshow.yml (COVERAGE_THRESHOLD), docs/en/data/skip_users.yml (codecov)",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Coverage measured/enforced: .github/workflows/smokeshow.yml (COVERAGE_THRESHOLD), docs/en/data/skip_users.yml (codecov)"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Coverage measured/enforced: .github/workflows/smokeshow.yml (COVERAGE_THRESHOLD), docs/en/data/skip_users.yml (codecov)"
+      }
+    },
+    "flaky_test_detection": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No flaky-test retry/detection found",
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "No flaky-test retry/detection found"
+      }
+    },
+    "test_performance_tracking": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Test timing/benchmarks tracked: .github/workflows/test.yml (codspeed), .gitignore (codspeed), docs/en/mkdocs.yml (benchmark), pyproject.toml (codspeed)",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Test timing/benchmarks tracked: .github/workflows/test.yml (codspeed), .gitignore (codspeed), docs/en/mkdocs.yml (benchmark), pyproject.toml (codspeed)"
+      }
+    },
+    "readme": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "README.md (534 lines, 35 headings)",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "README.md (534 lines, 35 headings)"
+      }
+    },
+    "agents_md": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No AGENTS.md or harness-specific agent instructions",
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "No AGENTS.md or harness-specific agent instructions"
+      }
+    },
+    "documentation_freshness": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "README.md updated within 180 days of the latest commit",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "README.md updated within 180 days of the latest commit"
+      }
+    },
+    "skills": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "Only fastapi/.agents/skills/fastapi/SKILL.md, a package-data skill for end users writing FastAPI apps, not at a harness-discovered root path and not about working in this repo",
+      "source": "agent",
+      "previous": {
+        "status": "fail",
+        "rationale": "Only fastapi/.agents/skills/fastapi/SKILL.md, a package-data skill for end users writing FastAPI apps, not at a harness-discovered root path and not about working in this repo"
+      }
+    },
+    "api_schema_docs": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library with no network API of its own; scanner matched the dependency name 'fastapi'",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library with no network API of its own; scanner matched the dependency name 'fastapi'"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "API schema: fastapi"
+      }
+    },
+    "service_flow_documented": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "English docs include mermaid sequence diagrams of request/dependency flows (docs/en/docs/tutorial/dependencies/dependencies-with-yield.md, advanced/behind-a-proxy.md); no internal ARCHITECTURE.md",
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "English docs include mermaid sequence diagrams of request/dependency flows (docs/en/docs/tutorial/dependencies/dependencies-with-yield.md, advanced/behind-a-proxy.md); no internal ARCHITECTURE.md"
+      }
+    },
+    "automated_doc_generation": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Docs generated from source: docs/en/mkdocs.yml, docs/hi/mkdocs.yml",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Docs generated from source: docs/en/mkdocs.yml, docs/hi/mkdocs.yml"
+      }
+    },
+    "agents_md_validation": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "Nothing verifies agent instructions stay accurate",
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "Nothing verifies agent instructions stay accurate"
+      }
+    },
+    "env_template": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Env vars the code reads (FASTAPI_OTEL_AUTO_CONFIGURE, OTEL_EXPORTER_OTLP_*, FASTAPI_ENV) are documented in docs/en/docs/advanced/opentelemetry.md and fastapi-cli.md; none are required for development",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Env vars the code reads (FASTAPI_OTEL_AUTO_CONFIGURE, OTEL_EXPORTER_OTLP_*, FASTAPI_ENV) are documented in docs/en/docs/advanced/opentelemetry.md and fastapi-cli.md; none are required for development"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "Reads environment variables (fastapi/applications.py, fastapi/routing.py (+4 more)) but no .env template"
+      }
+    },
+    "devcontainer": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No devcontainer, Nix, devbox or dev Dockerfile",
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "No devcontainer, Nix, devbox or dev Dockerfile"
+      }
+    },
+    "local_services_setup": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "No backing services; tests use in-memory SQLite (sqlite://)",
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "No backing services; tests use in-memory SQLite (sqlite://)"
+      }
+    },
+    "database_schema": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library has no database",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library has no database"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Database used but no migrations/schema files"
+      }
+    },
+    "devcontainer_runnable": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "No environment definition to verify (devcontainer criterion fails)",
+      "source": "scan",
+      "previous": {
+        "status": "skip",
+        "rationale": "No environment definition to verify (devcontainer criterion fails)"
+      }
+    },
+    "structured_logging": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library, not a deployed service",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library, not a deployed service"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "No structured logger found"
+      }
+    },
+    "distributed_tracing": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library (criterion skips libraries); FastAPI provides OTel tracing to users but no service of its own emits traces",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library (criterion skips libraries); FastAPI provides OTel tracing to users but no service of its own emits traces"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Tracing: opentelemetry"
+      }
+    },
+    "metrics_collection": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library, not a deployed service",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library, not a deployed service"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "No metrics found"
+      }
+    },
+    "error_tracking_contextualized": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library; sentry-sdk is only a test dependency for integration tests",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library; sentry-sdk is only a test dependency for integration tests"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Error tracking: sentry-sdk, sentry"
+      }
+    },
+    "health_checks": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library, no running service",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library, no running service"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Service without health/readiness endpoints"
+      }
+    },
+    "alerting_configured": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library, nothing in production to alert on",
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Library, nothing in production to alert on"
+      }
+    },
+    "deployment_observability": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library, no deploys to monitor",
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Library, no deploys to monitor"
+      }
+    },
+    "profiling_instrumentation": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "CodSpeed benchmark harnesses in tests/benchmarks and tests/memory_benchmarks, run by the benchmark job in test.yml",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "CodSpeed benchmark harnesses in tests/benchmarks and tests/memory_benchmarks, run by the benchmark job in test.yml"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "No profiling hooks or benchmarks found"
+      }
+    },
+    "runbooks_documented": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library, no operations",
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Library, no operations"
+      }
+    },
+    "code_quality_metrics": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "smokeshow.yml publishes the combined coverage HTML report and a coverage status (threshold 100) for every PR/commit; CodSpeed tracks performance over time",
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "smokeshow.yml publishes the combined coverage HTML report and a coverage status (threshold 100) for every PR/commit; CodSpeed tracks performance over time"
+      }
+    },
+    "circuit_breakers": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library with no external service calls of its own",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library with no external service calls of its own"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "No circuit breaker found; fail if the app calls external services"
+      }
+    },
+    "gitignore_comprehensive": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "missing patterns: .env",
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "missing patterns: .env"
+      }
+    },
+    "branch_protection": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Rulesets apply to master: creation, deletion, non_fast_forward, pull_request (+2 more)",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Rulesets apply to master: creation, deletion, non_fast_forward, pull_request (+2 more)"
+      }
+    },
+    "codeowners": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No CODEOWNERS file",
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "No CODEOWNERS file"
+      }
+    },
+    "secret_scanning": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No gitleaks/trufflehog/detect-secrets in .pre-commit-config.yaml or workflows; platform setting not visible (security_and_analysis null, secret-scanning API 404) (unverified)",
+      "source": "agent",
+      "previous": {
+        "status": "fail",
+        "rationale": "No gitleaks/trufflehog/detect-secrets in .pre-commit-config.yaml or workflows; platform setting not visible (security_and_analysis null, secret-scanning API 404) (unverified)"
+      }
+    },
+    "dependency_update_automation": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Automated dependency updates: .github/dependabot.yml",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Automated dependency updates: .github/dependabot.yml"
+      }
+    },
+    "secrets_management": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Secrets read from environment; no hardcoded secrets found",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Secrets read from environment; no hardcoded secrets found"
+        }
+      },
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Secrets read from environment; no hardcoded secrets found"
+      }
+    },
+    "log_scrubbing": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Library emits request data into telemetry and redacts sensitive query params (_SENSITIVE_QUERY_PARAMETERS -> REDACTED in fastapi/telemetry/_asgi.py)",
+      "apps": {
+        ".": {
+          "status": "pass",
+          "rationale": "Library emits request data into telemetry and redacts sensitive query params (_SENSITIVE_QUERY_PARAMETERS -> REDACTED in fastapi/telemetry/_asgi.py)"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "Redaction/scrubbing: fastapi/telemetry/_api.py"
+      }
+    },
+    "pii_handling": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library stores no personal data",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library stores no personal data"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Decide whether this app handles personal data; skip if not"
+      }
+    },
+    "automated_security_review": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "Only zizmor runs on PRs and it scans .github/workflows YAML only; PR check runs show no CodeQL/Semgrep/Bandit for the fastapi/ Python source",
+      "source": "agent",
+      "previous": {
+        "status": "fail",
+        "rationale": "Only zizmor runs on PRs and it scans .github/workflows YAML only; PR check runs show no CodeQL/Semgrep/Bandit for the fastapi/ Python source"
+      }
+    },
+    "dast_scanning": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Framework library, not a running web app",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Framework library, not a running web app"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Web app without dynamic security scanning"
+      }
+    },
+    "privacy_compliance": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library collects no personal data",
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "Library collects no personal data"
+      }
+    },
+    "issue_templates": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Issue templates: .github/ISSUE_TEMPLATE/config.yml, .github/ISSUE_TEMPLATE/privileged.yml",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "Issue templates: .github/ISSUE_TEMPLATE/config.yml, .github/ISSUE_TEMPLATE/privileged.yml"
+      }
+    },
+    "pr_templates": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No pull request template",
+      "source": "scan",
+      "previous": {
+        "status": "fail",
+        "rationale": "No pull request template"
+      }
+    },
+    "issue_labeling_system": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "72 custom labels (e.g. feature, community-feedback, docs, confirmed, answered (+67 more))",
+      "source": "scan",
+      "previous": {
+        "status": "pass",
+        "rationale": "72 custom labels (e.g. feature, community-feedback, docs, confirmed, answered (+67 more))"
+      }
+    },
+    "backlog_health": {
+      "status": "pass",
+      "numerator": 1,
+      "denominator": 1,
+      "rationale": "Tracker kept clear: the only open issue is the pinned #10370 Roadmap (5.2k-char body; scanner's title-length heuristic missed it); recent issues are triaged and closed, requests go to Discussions",
+      "source": "agent",
+      "previous": {
+        "status": "pass",
+        "rationale": "Tracker kept clear: the only open issue is the pinned #10370 Roadmap (5.2k-char body; scanner's title-length heuristic missed it); recent issues are triaged and closed, requests go to Discussions"
+      }
+    },
+    "product_analytics_instrumentation": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library, not a user-facing app",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library, not a user-facing app"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "User-facing app without product analytics"
+      }
+    },
+    "experimentation_infrastructure": {
+      "status": "skip",
+      "numerator": 0,
+      "denominator": 0,
+      "rationale": "Library, not a user-facing app",
+      "apps": {
+        ".": {
+          "status": "skip",
+          "rationale": "Library, not a user-facing app"
+        }
+      },
+      "source": "agent",
+      "previous": {
+        "status": "skip",
+        "rationale": "No experimentation/A-B testing infrastructure"
+      }
+    },
+    "error_to_insight_pipeline": {
+      "status": "fail",
+      "numerator": 0,
+      "denominator": 1,
+      "rationale": "No automation turns user feedback (Discussions) or errors into issues; conversion is manual",
+      "source": "agent",
+      "previous": {
+        "status": "fail",
+        "rationale": "No automation turns user feedback (Discussions) or errors into issues; conversion is manual"
+      }
+    }
+  },
+  "action_items": [
+    {
+      "criterion": "agents_md",
+      "title": "Add an AGENTS.md with dev commands and conventions",
+      "why": "Contributor instructions live off-repo (contributing.md is a 7-line link to tiangolo.com), so agents must reverse-engineer setup from CI YAML; the same gap fails single_command_setup and naming_consistency at Level 2",
+      "how": "Commit AGENTS.md giving `uv sync` + `prek install` as the bootstrap, `bash scripts/test.sh`, `bash scripts/lint.sh`, `bash scripts/format.sh`, the 100% coverage rule, the docs_src/tests pairing and naming conventions"
+    },
+    {
+      "criterion": "pr_templates",
+      "title": "Add a pull request template",
+      "why": "PRs need an emoji-prefixed title and a latest-changes label (a required check), but nothing tells an agent that before it opens one",
+      "how": "Add .github/pull_request_template.md covering title format, label, regression test and docs_src example checklist"
+    },
+    {
+      "criterion": "codeowners",
+      "title": "Add CODEOWNERS",
+      "why": "No path ownership exists, so agents can't tell who reviews fastapi/ versus docs/<lang>/ translations",
+      "how": "Add .github/CODEOWNERS mapping fastapi/ and tests/ to core maintainers and docs/<lang>/ to translation reviewers"
+    }
+  ],
+  "previous_report": {
+    "generated_at": "2026-11-01T02:29:16+00:00",
+    "commit": "45cb2252c737906f37544f5ba6bee0295fb81468"
+  },
+  "scan_notes": []
+}
